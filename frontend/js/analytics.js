@@ -36,33 +36,36 @@ async function authFetch(path) {
     return res.json();
 }
 
-function setRestaurantName() {
+async function setRestaurantName() {
     const header = document.getElementById("restaurantName");
-    const user = typeof getAuthUser === "function" ? getAuthUser() : null;
-    const settingsName = window.settingsManager?.getRestaurantName?.();
-    const name = user?.restaurantName || settingsName || "CoHost Restaurant";
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
+    const fallbackSettings = window.settingsManager?.getRestaurantName?.();
+    let name = fallbackSettings || "CoHost Restaurant";
+
+    if (token) {
+        try {
+            const res = await fetch(`${API_BASE}/auth/me`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const me = await res.json();
+                if (me?.restaurantName) {
+                    name = me.restaurantName;
+                    if (typeof setAuthUser === "function") {
+                        setAuthUser({ ...(getAuthUser() || {}), restaurantName: name });
+                    }
+                }
+            }
+        } catch (err) {
+            // fall back to settings/local
+        }
+    } else if (typeof getAuthUser === "function") {
+        const user = getAuthUser();
+        if (user?.restaurantName) name = user.restaurantName;
+    }
+
     if (header) header.textContent = name;
     document.title = `Analytics - ${name}`;
-}
-
-async function refreshUserName() {
-    try {
-        const res = await fetch(`${API_BASE}/auth/me`, {
-            headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
-        });
-        if (!res.ok) throw new Error();
-        const me = await res.json();
-        if (me?.restaurantName) {
-            const header = document.getElementById("restaurantName");
-            if (header) header.textContent = me.restaurantName;
-            document.title = `Analytics - ${me.restaurantName}`;
-            if (typeof setAuthUser === "function") {
-                setAuthUser({ ...(getAuthUser() || {}), restaurantName: me.restaurantName });
-            }
-        }
-    } catch (_) {
-        setRestaurantName();
-    }
 }
 
 function formatHour(hour) {
@@ -395,7 +398,7 @@ function handleTimeRangeChange() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    await refreshUserName();
+    await setRestaurantName();
     handleTimeRangeChange();
 
     const refreshBtn = document.getElementById("refreshInsights");
