@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import authRoutes from './routes/auth.js';
 import waitlistRoutes from './routes/waitlist.js';
 import analyticsRoutes from './routes/analytics.js';
+import roomsRoutes from './routes/rooms.js';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/waitlist', waitlistRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/rooms', roomsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import Party from "../models/Party.js";
+import Room from "../models/Room.js";
 
 const router = express.Router();
 
@@ -25,6 +26,14 @@ router.post("/register", async (req, res) => {
       email,
       passwordHash,
       restaurantName: restaurantName || "CoHost Restaurant"
+    });
+
+    // Seed default room (empty)
+    await Room.create({
+      user: user._id,
+      name: "Main Dining Room",
+      key: "main",
+      tables: []
     });
 
     // Seed demo parties for new accounts so analytics and history have data

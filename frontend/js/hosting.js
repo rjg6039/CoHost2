@@ -1,8 +1,8 @@
 // Main hosting page functionality
 class HostingPage {
     constructor() {
-        this.data = initializeData();
-        this.currentRoom = appState.currentRoom;
+        this.data = { rooms: {} };
+        this.currentRoom = 'main';
         this.draggedParty = null;
         this.contextMenu = null;
         this.roomOrigin = { x: 0, y: 0 };
@@ -146,18 +146,27 @@ class HostingPage {
             });
             const data = await res.json();
             if (res.ok && data.rooms) {
-                // rebuild rooms map with empty tables (tables managed in Arrange)
-                const nextRooms = {};
-                data.rooms.forEach((r, idx) => {
-                    nextRooms[r] = this.data.rooms?.[r] || { name: r, tables: [] };
+                const roomRes = await fetch(`${API_BASE}/rooms`, {
+                    headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
                 });
-                this.data.rooms = nextRooms;
-                this.currentRoom = data.rooms.includes(this.currentRoom) ? this.currentRoom : data.rooms[0];
+                const roomPayload = await roomRes.json().catch(() => ({}));
+                if (roomRes.ok && roomPayload.rooms) {
+                    this.data.rooms = {};
+                    roomPayload.rooms.forEach(r => {
+                        this.data.rooms[r.key] = { ...r, name: r.name, tables: r.tables || [] };
+                    });
+                    this.currentRoom = this.data.rooms[this.currentRoom] ? this.currentRoom : roomPayload.rooms[0].key;
+                } else {
+                    const nextRooms = {};
+                    data.rooms.forEach(r => nextRooms[r] = { name: r, tables: [] });
+                    this.data.rooms = nextRooms;
+                    this.currentRoom = data.rooms.includes(this.currentRoom) ? this.currentRoom : data.rooms[0];
+                }
                 this.renderRoomMetrics();
                 this.renderTables();
                 const select = document.getElementById('roomSelect');
                 if (select) {
-                    select.innerHTML = data.rooms.map(r => `<option value="${r}">${r}</option>`).join('');
+                    select.innerHTML = Object.keys(this.data.rooms).map(r => `<option value="${r}">${r}</option>`).join('');
                     select.value = this.currentRoom;
                 }
             }

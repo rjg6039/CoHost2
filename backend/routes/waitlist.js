@@ -1,6 +1,7 @@
 import express from "express";
 import Party from "../models/Party.js";
 import User from "../models/User.js";
+import Room from "../models/Room.js";
 import bcrypt from "bcryptjs";
 import { authRequired } from "../middleware/auth.js";
 
@@ -82,12 +83,15 @@ router.patch("/:id/state", async (req, res) => {
     } else if (state === "completed") {
       party.state = "completed";
       party.completedAt = new Date();
+      party.tableId = null;
     } else if (state === "cancelled") {
       party.state = "cancelled";
       party.cancelledAt = new Date();
       party.cancelReason = cancelReason || party.cancelReason;
+      party.tableId = null;
     } else if (state === "waiting") {
       party.state = "waiting";
+      party.tableId = null;
     }
 
     await party.save();
@@ -120,8 +124,9 @@ router.get("/history", async (req, res) => {
 // GET /api/waitlist/rooms  -> distinct rooms for this user
 router.get("/rooms", async (req, res) => {
   try {
-    const rooms = await Party.distinct("room", { user: req.userId });
-    const list = rooms.length ? rooms : ["main"];
+    const rooms = await Room.find({ user: req.userId }).sort({ createdAt: 1 });
+    const names = rooms.map(r => r.key);
+    const list = names.length ? names : ["main"];
     res.json({ rooms: list });
   } catch (err) {
     console.error("Rooms list error:", err);

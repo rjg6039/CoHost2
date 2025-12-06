@@ -1,7 +1,7 @@
 // Arrange Page functionality with Grid System
 class ArrangePage {
     constructor() {
-        this.data = this.loadData();
+        this.data = { rooms: {} };
         this.currentRoom = 'main';
         this.state = {
             selectedTable: null,
@@ -39,12 +39,21 @@ class ArrangePage {
             });
             const data = await res.json();
             if (res.ok && data.rooms) {
-                const nextRooms = {};
-                data.rooms.forEach(r => {
-                    nextRooms[r] = this.data.rooms?.[r] || { name: r, tables: [] };
+                const roomRes = await fetch(`${API_BASE}/rooms`, {
+                    headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
                 });
-                this.data.rooms = nextRooms;
-                this.currentRoom = data.rooms.includes(this.currentRoom) ? this.currentRoom : data.rooms[0];
+                const roomPayload = await roomRes.json().catch(() => ({}));
+                if (roomRes.ok && roomPayload.rooms) {
+                    this.data.rooms = {};
+                    roomPayload.rooms.forEach(r => {
+                        this.data.rooms[r.key] = { ...r, name: r.name, tables: r.tables || [] };
+                    });
+                    this.currentRoom = this.data.rooms[this.currentRoom] ? this.currentRoom : roomPayload.rooms[0].key;
+                } else {
+                    this.data.rooms = {};
+                    data.rooms.forEach(r => this.data.rooms[r] = { name: r, tables: [] });
+                    this.currentRoom = data.rooms[0];
+                }
                 this.populateRoomSelector();
                 this.renderArrangeView();
             }
@@ -56,83 +65,24 @@ class ArrangePage {
     }
 
     loadData() {
-        const savedData = localStorage.getItem('cohost-rooms');
-        if (savedData) {
-            const data = JSON.parse(savedData);
-            return this.normalizeMainLayout(data);
-        }
-
-        return this.normalizeMainLayout({
-            waitlist: [],
-            history: [],
-            rooms: {
-                main: {
-                    name: "Main Dining Room",
-                    tables: this.getDefaultMainTables()
-                },
-                patio: {
-                    name: "Patio",
-                    tables: [
-                        { id: 21, section: 1, number: 1, capacity: 4, x: 0, y: 0, shape: 'square', handicap: false, highchair: false, window: true, state: "ready" }
-                    ]
-                },
-                bar: {
-                    name: "Bar Area",
-                    tables: [
-                        { id: 31, section: 1, number: 1, capacity: 2, x: 0, y: 0, shape: 'vertical', handicap: false, highchair: false, window: false, state: "seated", seatedParty: { id: 2, name: "Smith Group", size: 6 } }
-                    ]
-                },
-                private: {
-                    name: "Private Dining",
-                    tables: [
-                        { id: 41, section: 1, number: 1, capacity: 8, x: 0, y: 0, shape: 'horizontal', handicap: true, highchair: true, window: false, state: "not-ready" }
-                    ]
-                },
-                lounge: {
-                    name: "Lounge",
-                    tables: [
-                        { id: 51, section: 1, number: 1, capacity: 4, x: -120, y: -80, shape: 'square', handicap: false, highchair: false, window: true, state: "ready" },
-                        { id: 52, section: 1, number: 2, capacity: 4, x: 120, y: -80, shape: 'square', handicap: false, highchair: true, window: false, state: "ready" },
-                        { id: 53, section: 1, number: 3, capacity: 2, x: 0, y: 80, shape: 'circle', handicap: false, highchair: false, window: false, state: "ready" }
-                    ]
-                }
-            }
-        });
-    }
-
-    getDefaultMainTables() {
-        return [
-            { id: 1, section: 1, number: 1, capacity: 4, x: -240, y: -160, shape: 'square', handicap: false, highchair: true, window: false, state: "ready" },
-            { id: 2, section: 1, number: 2, capacity: 4, x: 0, y: -160, shape: 'square', handicap: false, highchair: false, window: true, state: "ready" },
-            { id: 3, section: 1, number: 3, capacity: 4, x: 240, y: -160, shape: 'square', handicap: false, highchair: true, window: false, state: "ready" },
-            { id: 4, section: 1, number: 4, capacity: 4, x: -240, y: 40, shape: 'square', handicap: false, highchair: false, window: false, state: "ready" },
-            { id: 5, section: 1, number: 5, capacity: 2, x: 0, y: 40, shape: 'circle', handicap: true, highchair: false, window: false, state: "ready" },
-            { id: 6, section: 1, number: 6, capacity: 6, x: 240, y: 40, shape: 'horizontal', handicap: false, highchair: true, window: false, state: "seated", seatedParty: { id: 1, name: "Johnson Family", size: 4 } },
-            { id: 7, section: 2, number: 7, capacity: 4, x: -240, y: 240, shape: 'square', handicap: false, highchair: false, window: true, state: "ready" },
-            { id: 8, section: 2, number: 8, capacity: 4, x: 0, y: 240, shape: 'square', handicap: true, highchair: false, window: false, state: "ready" }
-        ];
+        return { rooms: {} };
     }
 
     normalizeMainLayout(data) {
-        const tables = data?.rooms?.main?.tables;
-        if (!tables || tables.length === 0) return data;
-
-        const xs = tables.map(t => t.x);
-        const ys = tables.map(t => t.y);
-        const spreadX = Math.max(...xs) - Math.min(...xs);
-        const spreadY = Math.max(...ys) - Math.min(...ys);
-
-        // If everything collapsed into a corner (< 200px spread), reset to default layout
-        if (spreadX < 200 && spreadY < 200) {
-            data.rooms.main.tables = this.getDefaultMainTables();
-        }
-
         return data;
     }
 
     saveData() {
-        const payload = { rooms: this.data.rooms || {} };
-        localStorage.setItem('cohost-rooms', JSON.stringify(payload));
+        const room = this.data.rooms[this.currentRoom];
+        if (!room) return;
+        fetch(`${API_BASE}/rooms/${room._id || room.id || room.key}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken() || ''}`
+            },
+            body: JSON.stringify({ tables: room.tables, name: room.name })
+        }).catch(err => console.error('Save room error', err));
     }
 
     setupEventListeners() {
@@ -587,19 +537,23 @@ class ArrangePage {
 
     saveRoom() {
         const name = document.getElementById('roomName').value;
-        if (name) {
-            const roomKey = name.toLowerCase().replace(/\s+/g, '-');
-            this.data.rooms[roomKey] = {
-                name,
-                tables: []
-            };
-
-            this.saveData();
-            this.currentRoom = roomKey;
+        if (!name) return;
+        fetch(`${API_BASE}/rooms`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken() || ''}`
+            },
+            body: JSON.stringify({ name })
+        }).then(r => r.json().then(body => ({ ok: r.ok, body })))
+        .then(({ ok, body }) => {
+            if (!ok) throw new Error(body.error || 'Unable to create room');
+            this.data.rooms[body.room.key] = { ...body.room, tables: body.room.tables || [] };
+            this.currentRoom = body.room.key;
             this.populateRoomSelector();
             this.hideRoomModal();
             this.renderArrangeView();
-        }
+        }).catch(err => console.error(err));
     }
 
     deleteCurrentRoom() {
@@ -608,12 +562,17 @@ class ArrangePage {
             return;
         }
 
-        if (confirm(`Are you sure you want to delete the "${this.data.rooms[this.currentRoom].name}" room? This cannot be undone.`)) {
-            delete this.data.rooms[this.currentRoom];
-            this.currentRoom = Object.keys(this.data.rooms)[0];
-            this.saveData();
-            this.populateRoomSelector();
-            this.renderArrangeView();
+        if (confirm(`Delete the "${this.data.rooms[this.currentRoom].name}" room? This cannot be undone.`)) {
+            const room = this.data.rooms[this.currentRoom];
+            fetch(`${API_BASE}/rooms/${room._id || room.id || room.key}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
+            }).finally(() => {
+                delete this.data.rooms[this.currentRoom];
+                this.currentRoom = Object.keys(this.data.rooms)[0];
+                this.populateRoomSelector();
+                this.renderArrangeView();
+            });
         }
     }
 
