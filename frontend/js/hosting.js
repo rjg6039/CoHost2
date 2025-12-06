@@ -185,7 +185,7 @@ class HostingPage {
                     headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
                 });
                 const roomPayload = await roomRes.json().catch(() => ({}));
-                if (roomRes.ok && roomPayload.rooms) {
+                if (roomRes.ok && Array.isArray(roomPayload.rooms) && roomPayload.rooms.length) {
                     this.data.rooms = {};
                     roomPayload.rooms.forEach(r => {
                         this.data.rooms[r.key] = { ...r, name: r.name, tables: r.tables || [] };
@@ -203,8 +203,9 @@ class HostingPage {
                 const select = document.getElementById('roomSelect');
                 if (select) {
                     const keys = Object.keys(this.data.rooms);
-                    select.innerHTML = keys.map(r => `<option value="${r}">${this.data.rooms[r].name || r}</option>`).join('');
-                    select.value = this.currentRoom;
+                    const options = keys.length ? keys : ['main'];
+                    select.innerHTML = options.map(r => `<option value="${r}">${this.data.rooms[r]?.name || r}</option>`).join('');
+                    select.value = this.currentRoom || options[0];
                 }
             }
         } catch (err) {
