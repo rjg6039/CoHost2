@@ -234,6 +234,11 @@ class HostingPage {
     renderRoomMetrics() {
         const metricsContainer = document.getElementById('roomMetricsContainer');
 
+        if (!this.data.rooms || !Object.keys(this.data.rooms).length) {
+            metricsContainer.innerHTML = '<div class="room-pin">No rooms yet</div>';
+            return;
+        }
+
         let metricsHTML = '';
         let roomCount = 0;
 
@@ -300,7 +305,12 @@ class HostingPage {
 
     renderTables() {
         const tableView = document.getElementById('tableView');
-        const room = this.data.rooms[this.currentRoom] || { tables: [] };
+        const room = this.data.rooms[this.currentRoom];
+
+        if (!room) {
+            tableView.innerHTML = '';
+            return;
+        }
 
         tableView.innerHTML = '';
 
