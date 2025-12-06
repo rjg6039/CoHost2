@@ -1,14 +1,13 @@
-// backend/server.js
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import mongoose from "mongoose";
-import path from "path";
-import { fileURLToPath } from "url";
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import mongoose from 'mongoose';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-import authRoutes from "./routes/auth.js";
-import waitlistRoutes from "./routes/waitlist.js";
-import analyticsRoutes from "./routes/analytics.js";
+import authRoutes from './routes/auth.js';
+import waitlistRoutes from './routes/waitlist.js';
+import analyticsRoutes from './routes/analytics.js';
 
 dotenv.config();
 
@@ -45,7 +44,7 @@ app.get("*", (req, res) => {
 
 // Mongo + start
 mongoose
-  .connect(MONGODB_URI) // <- DB name comes from URI (…/cohost2)
+  .connect(MONGODB_URI)
   .then(() => {
     console.log("[Mongo] Connected");
     app.listen(PORT, () => {
