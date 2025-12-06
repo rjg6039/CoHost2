@@ -12,7 +12,7 @@ let appState = {
     waitlistSort: { field: 'time', direction: 'asc' }
 };
 
-// Initialize data (rooms only)
+// Initialize data (rooms only, will be replaced by server list)
 function initializeData() {
     try {
         const savedData = localStorage.getItem('cohost-rooms');

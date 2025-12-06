@@ -24,6 +24,7 @@ class HostingPage {
         this.renderPage();
         this.setupTableViewPan();
         this.refreshWaitlist();
+        this.refreshRooms();
     }
 
     setupEventListeners() {
@@ -136,6 +137,33 @@ class HostingPage {
         this.renderRoomMetrics();
         this.renderTables();
         this.renderWaitlist();
+    }
+
+    async refreshRooms() {
+        try {
+            const res = await fetch(`${API_BASE}/waitlist/rooms`, {
+                headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
+            });
+            const data = await res.json();
+            if (res.ok && data.rooms) {
+                // rebuild rooms map with empty tables (tables managed in Arrange)
+                const nextRooms = {};
+                data.rooms.forEach((r, idx) => {
+                    nextRooms[r] = this.data.rooms?.[r] || { name: r, tables: [] };
+                });
+                this.data.rooms = nextRooms;
+                this.currentRoom = data.rooms.includes(this.currentRoom) ? this.currentRoom : data.rooms[0];
+                this.renderRoomMetrics();
+                this.renderTables();
+                const select = document.getElementById('roomSelect');
+                if (select) {
+                    select.innerHTML = data.rooms.map(r => `<option value="${r}">${r}</option>`).join('');
+                    select.value = this.currentRoom;
+                }
+            }
+        } catch (err) {
+            console.warn("Unable to refresh rooms", err);
+        }
     }
 
     renderRoomMetrics() {

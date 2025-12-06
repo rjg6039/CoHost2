@@ -117,6 +117,18 @@ router.get("/history", async (req, res) => {
   }
 });
 
+// GET /api/waitlist/rooms  -> distinct rooms for this user
+router.get("/rooms", async (req, res) => {
+  try {
+    const rooms = await Party.distinct("room", { user: req.userId });
+    const list = rooms.length ? rooms : ["main"];
+    res.json({ rooms: list });
+  } catch (err) {
+    console.error("Rooms list error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // DELETE /api/waitlist/history  (requires password)
 router.delete("/history", async (req, res) => {
   try {

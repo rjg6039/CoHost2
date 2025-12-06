@@ -29,8 +29,30 @@ class ArrangePage {
 
     init() {
         this.setupEventListeners();
-        this.populateRoomSelector();
-        this.renderArrangeView();
+        this.refreshRooms();
+    }
+
+    async refreshRooms() {
+        try {
+            const res = await fetch(`${API_BASE}/waitlist/rooms`, {
+                headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
+            });
+            const data = await res.json();
+            if (res.ok && data.rooms) {
+                const nextRooms = {};
+                data.rooms.forEach(r => {
+                    nextRooms[r] = this.data.rooms?.[r] || { name: r, tables: [] };
+                });
+                this.data.rooms = nextRooms;
+                this.currentRoom = data.rooms.includes(this.currentRoom) ? this.currentRoom : data.rooms[0];
+                this.populateRoomSelector();
+                this.renderArrangeView();
+            }
+        } catch (err) {
+            console.warn("Unable to refresh rooms", err);
+            this.populateRoomSelector();
+            this.renderArrangeView();
+        }
     }
 
     loadData() {
