@@ -383,6 +383,7 @@ class HostingPage {
         tableEl.style.height = `${size.height}px`;
         tableEl.style.transform = 'translate(-50%, -50%)';
         tableEl.dataset.tableId = table.id;
+        tableEl.dataset.tableKey = table._id || table.id;
 
         // Add a subtle visual indication when filters are active and table matches
         const isFiltered = this.filters.handicap || this.filters.highchair || this.filters.window;
@@ -437,10 +438,10 @@ class HostingPage {
         this.sortWaitlistData();
 
         // Count only waiting parties for the counter
-        const waitingParties = this.data.waitlist.filter(p => p.state === 'waiting');
+        const waitingParties = (this.waitlist || []).filter(p => p.state === 'waiting');
         waitlistCount.textContent = waitingParties.length;
 
-        if (this.data.waitlist.length === 0) {
+        if (!this.waitlist || this.waitlist.length === 0) {
             emptyState.style.display = 'block';
             waitlistBody.innerHTML = '';
             return;
@@ -448,7 +449,7 @@ class HostingPage {
 
         emptyState.style.display = 'none';
 
-        waitlistBody.innerHTML = this.data.waitlist.map(party => this.createWaitlistRow(party)).join('');
+        waitlistBody.innerHTML = this.waitlist.map(party => this.createWaitlistRow(party)).join('');
 
         // Re-setup drag and drop
         this.setupDragAndDrop();
@@ -788,7 +789,9 @@ class HostingPage {
     sortWaitlistData() {
         const { field, direction } = appState.waitlistSort;
 
-        this.data.waitlist.sort((a, b) => {
+        if (!Array.isArray(this.waitlist)) return;
+
+        this.waitlist.sort((a, b) => {
             // Sort seated parties to the bottom
             if (a.state === 'seated' && b.state !== 'seated') return 1;
             if (a.state !== 'seated' && b.state === 'seated') return -1;
@@ -884,17 +887,21 @@ class HostingPage {
             return;
         }
 
+        // When backend wiring is complete, this should POST to /api/waitlist.
+        // For now, guard against missing waitlist.
+        if (!Array.isArray(this.waitlist)) this.waitlist = [];
+
         if (partyId) {
-            const index = this.data.waitlist.findIndex(p => p.id === parseInt(partyId));
+            const index = this.waitlist.findIndex(p => p._id === partyId || p.id === parseInt(partyId));
             if (index !== -1) {
-                this.data.waitlist[index] = {
-                    ...this.data.waitlist[index],
+                this.waitlist[index] = {
+                    ...this.waitlist[index],
                     name, size, time, phone, notes, handicap, highchair, window
                 };
             }
         } else {
-            const newId = Math.max(0, ...this.data.waitlist.map(p => p.id)) + 1;
-            this.data.waitlist.push({
+            const newId = Math.max(0, ...this.waitlist.map(p => p.id || 0)) + 1;
+            this.waitlist.push({
                 id: newId,
                 name,
                 size,
@@ -914,7 +921,7 @@ class HostingPage {
 
         this.hidePartyModal();
         this.renderWaitlist();
-        saveData(this.data);
+        // TODO: replace with backend persistence
     }
 
     hidePartyModal() {
