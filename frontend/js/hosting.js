@@ -192,10 +192,9 @@ class HostingPage {
                     });
                     this.currentRoom = this.data.rooms[this.currentRoom] ? this.currentRoom : roomPayload.rooms[0].key;
                 } else {
-                    const nextRooms = {};
+                    this.data.rooms = {};
                     const list = data.rooms.length ? data.rooms : ['main'];
-                    list.forEach(r => nextRooms[r] = { name: r, tables: [] });
-                    this.data.rooms = nextRooms;
+                    list.forEach(r => this.data.rooms[r] = { name: r, tables: [] });
                     this.currentRoom = list.includes(this.currentRoom) ? this.currentRoom : list[0];
                 }
                 this.renderRoomMetrics();
