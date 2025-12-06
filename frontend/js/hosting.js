@@ -743,48 +743,51 @@ class HostingPage {
 
     // Table Actions
     unseatPartyFromTable(tableId) {
-        const room = this.data.rooms[this.currentRoom];
-        const table = room.tables.find(t => t.id === tableId);
+        const tables = this.getRoomTablesWithSeating();
+        const table = tables.find(t => t.id === tableId);
+        if (!table || !table.seatedParty) return;
 
-        if (table && table.seatedParty) {
-            const partyId = table.seatedParty._id || table.seatedParty.id;
-            this.updatePartyState(partyId, 'waiting').then(() => this.refreshWaitlist());
-            table.state = 'ready';
-            table.seatedParty = null;
-            this.persistRoomTables();
-            this.renderTables();
-            this.renderRoomMetrics();
-        }
+        const partyId = table.seatedParty._id || table.seatedParty.id;
+        this.updatePartyState(partyId, 'waiting', { tableId: null }).then(() => this.refreshWaitlist());
+
+        const room = this.data.rooms[this.currentRoom];
+        const baseTable = room?.tables.find(t => t.id === tableId);
+        if (baseTable) baseTable.state = 'ready';
+        this.persistRoomTables();
+        this.renderTables();
+        this.renderRoomMetrics();
     }
 
     completePartyFromTable(tableId) {
-        const room = this.data.rooms[this.currentRoom];
-        const table = room.tables.find(t => t.id === tableId);
+        const tables = this.getRoomTablesWithSeating();
+        const table = tables.find(t => t.id === tableId);
+        if (!table || !table.seatedParty) return;
 
-        if (table && table.seatedParty) {
-            const pid = table.seatedParty._id || table.seatedParty.id;
-            this.completeParty(pid);
-            table.state = 'ready';
-            table.seatedParty = null;
-            this.persistRoomTables();
-            this.renderTables();
-            this.renderRoomMetrics();
-        }
+        const pid = table.seatedParty._id || table.seatedParty.id;
+        this.completeParty(pid);
+
+        const room = this.data.rooms[this.currentRoom];
+        const baseTable = room?.tables.find(t => t.id === tableId);
+        if (baseTable) baseTable.state = 'ready';
+        this.persistRoomTables();
+        this.renderTables();
+        this.renderRoomMetrics();
     }
 
     cancelPartyFromTable(tableId) {
-        const room = this.data.rooms[this.currentRoom];
-        const table = room.tables.find(t => t.id === tableId);
+        const tables = this.getRoomTablesWithSeating();
+        const table = tables.find(t => t.id === tableId);
+        if (!table || !table.seatedParty) return;
 
-        if (table && table.seatedParty) {
-            const pid = table.seatedParty._id || table.seatedParty.id;
-            this.cancelParty(pid);
-            table.state = 'ready';
-            table.seatedParty = null;
-            this.persistRoomTables();
-            this.renderTables();
-            this.renderRoomMetrics();
-        }
+        const pid = table.seatedParty._id || table.seatedParty.id;
+        this.cancelParty(pid);
+
+        const room = this.data.rooms[this.currentRoom];
+        const baseTable = room?.tables.find(t => t.id === tableId);
+        if (baseTable) baseTable.state = 'ready';
+        this.persistRoomTables();
+        this.renderTables();
+        this.renderRoomMetrics();
     }
 
     markTableReady(tableId) {
