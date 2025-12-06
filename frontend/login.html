@@ -136,6 +136,26 @@
 </div>
 
 <!-- Load JavaScript files in correct order -->
+<script>
+    console.log('=== DEBUG: Script Loading Check ===');
+    console.log('Current URL:', window.location.href);
+    console.log('Script paths should be relative to:', window.location.origin);
+
+    // Test if config.js loads
+    console.log('Testing config.js load...');
+</script>
+
+<!-- Load scripts with error handling -->
+<script src="js/config.js" onerror="console.error('Failed to load config.js')"></script>
+<script>
+    console.log('After config.js load - apiRequest exists:', typeof apiRequest);
+    console.log('API_BASE_URL:', typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'undefined');
+</script>
+
+<script src="js/auth.js" onerror="console.error('Failed to load auth.js')"></script>
+<script>
+    console.log('All scripts loaded');
+</script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 </body>
