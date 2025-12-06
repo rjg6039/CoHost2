@@ -29,7 +29,8 @@ const partySchema = new mongoose.Schema({
   // Special requirements
   handicap: { type: Boolean, default: false },
   highchair: { type: Boolean, default: false },
-  window: { type: Boolean, default: false }
+  window: { type: Boolean, default: false },
+  time: { type: String }
 }, {
   timestamps: true
 });

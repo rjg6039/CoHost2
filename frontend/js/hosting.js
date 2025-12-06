@@ -40,11 +40,7 @@ class HostingPage {
                 headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
             });
             const data = await res.json();
-            if (res.ok && data.parties) {
-                this.waitlist = data.parties;
-            } else {
-                this.waitlist = [];
-            }
+            this.waitlist = (res.ok && Array.isArray(data.parties)) ? data.parties : [];
         } catch (err) {
             console.warn("Unable to refresh waitlist", err);
             this.waitlist = [];
@@ -200,6 +196,35 @@ class HostingPage {
         this.renderWaitlist();
     }
 
+    getRoomTablesWithSeating(roomKey = this.currentRoom) {
+        const room = this.data.rooms[roomKey];
+        if (!room) return [];
+
+        const seatedByTable = {};
+        (this.waitlist || []).forEach(p => {
+            const partyRoom = p.room || 'main';
+            if (p.state === 'seated' &&
+                p.tableId !== undefined &&
+                p.tableId !== null &&
+                partyRoom === roomKey) {
+                seatedByTable[p.tableId] = { ...p, id: p._id || p.id };
+            }
+        });
+
+        return (room.tables || []).map(t => {
+            const table = { ...t };
+            const seatedParty = seatedByTable[t.id];
+            if (seatedParty) {
+                table.state = 'seated';
+                table.seatedParty = seatedParty;
+            } else {
+                table.seatedParty = null;
+                if (table.state === 'seated') table.state = 'ready';
+            }
+            return table;
+        });
+    }
+
     async refreshRooms() {
         try {
             const res = await fetch(`${API_BASE}/waitlist/rooms`, {
@@ -274,10 +299,11 @@ class HostingPage {
         let metricsHTML = '';
 
         Object.entries(this.data.rooms).forEach(([roomKey, room]) => {
-            const availableTables = room.tables.filter(t => t.state === 'ready').length;
-            const seatedTables = room.tables.filter(t => t.state === 'seated').length;
-            const notReadyTables = room.tables.filter(t => t.state === 'not-ready').length;
-            const totalTables = room.tables.length;
+            const computedTables = this.getRoomTablesWithSeating(roomKey);
+            const availableTables = computedTables.filter(t => t.state === 'ready').length;
+            const seatedTables = computedTables.filter(t => t.state === 'seated').length;
+            const notReadyTables = computedTables.filter(t => t.state === 'not-ready').length;
+            const totalTables = computedTables.length;
 
             const occupancyRate = totalTables > 0 ? Math.round((seatedTables / totalTables) * 100) : 0;
 
@@ -341,8 +367,10 @@ class HostingPage {
 
         tableView.innerHTML = '';
 
+        const computedTables = this.getRoomTablesWithSeating();
+
         // Filter tables based on active filters
-        const filteredTables = this.filterTables(room.tables || []);
+        const filteredTables = this.filterTables(computedTables);
 
         let minX = 0, minY = 0, maxX = 0, maxY = 0;
         if (filteredTables.length) {
@@ -491,9 +519,10 @@ class HostingPage {
         let timeDisplay = '';
         let rowClass = '';
         let seatingTimeClass = '';
+        const timeLabel = party.time || '--';
 
         if (party.state === 'seated') {
-            const seatedTime = this.calculateSeatedTime(party.seatedTime);
+            const seatedTime = this.calculateSeatedTime(party.seatedAt || party.seatedTime);
             timeDisplay = `<td class="time-seated">${seatedTime}</td>`;
             rowClass = 'seated-party';
             seatingTimeClass = 'time-seated';
@@ -508,31 +537,32 @@ class HostingPage {
         }
 
         let actionButtons = '';
+        const pid = party._id || party.id;
         if (party.state === 'waiting') {
             actionButtons = `
-                <button class="btn btn-success" onclick="hostingPage.seatParty(${party.id})">Seat</button>
-                <button class="btn btn-warning" onclick="hostingPage.editParty(${party.id})">Edit</button>
-                <button class="btn btn-danger" onclick="hostingPage.removeParty(${party.id})">Remove</button>
+                <button class="btn btn-success" onclick="hostingPage.seatParty('${pid}')">Seat</button>
+                <button class="btn btn-warning" onclick="hostingPage.editParty('${pid}')">Edit</button>
+                <button class="btn btn-danger" onclick="hostingPage.removeParty('${pid}')">Remove</button>
             `;
         } else if (party.state === 'seated') {
             actionButtons = `
-                <button class="btn btn-info" onclick="hostingPage.unseatParty(${party.id})">Unseat</button>
-                <button class="btn btn-success" onclick="hostingPage.completeParty(${party.id})">Complete</button>
-                <button class="btn btn-danger" onclick="hostingPage.cancelParty(${party.id})">Cancel</button>
+                <button class="btn btn-info" onclick="hostingPage.unseatParty('${pid}')">Unseat</button>
+                <button class="btn btn-success" onclick="hostingPage.completeParty('${pid}')">Complete</button>
+                <button class="btn btn-danger" onclick="hostingPage.cancelParty('${pid}')">Cancel</button>
             `;
         }
 
         return `
-            <tr class="draggable-party ${rowClass}" draggable="true" data-party-id="${party.id}">
+            <tr class="draggable-party ${rowClass}" draggable="true" data-party-id="${pid}">
                 <td>
                     ${party.name}
                     ${requirements ? `<div class="requirement-indicators">${requirements}</div>` : ''}
                 </td>
                 <td class="party-size">${party.size}</td>
-                <td class="seating-time ${seatingTimeClass}">${party.time}</td>
+                <td class="seating-time ${seatingTimeClass}">${timeLabel}</td>
                 ${timeDisplay}
-                <td class="phone-number">${party.phone}</td>
-                <td class="notes">${party.notes}</td>
+                <td class="phone-number">${party.phone || ''}</td>
+                <td class="notes">${party.notes || ''}</td>
                 <td>${actionButtons}</td>
             </tr>
         `;
@@ -543,6 +573,7 @@ class HostingPage {
 
         const now = new Date();
         const seated = new Date(seatedTime);
+        if (isNaN(seated.getTime())) return 'Just seated';
         const diffMs = now - seated;
         const diffMins = Math.floor(diffMs / 60000);
         const diffHours = Math.floor(diffMins / 60);
@@ -555,8 +586,10 @@ class HostingPage {
     }
 
     calculateTimeRemaining(party) {
+        if (!party.time) return '<span class="time-normal">--</span>';
         const now = new Date();
         const partyTime = new Date(now.toDateString() + ' ' + party.time);
+        if (isNaN(partyTime.getTime())) return '<span class="time-normal">--</span>';
         const diffMs = partyTime - now;
         const diffMins = Math.floor(diffMs / 60000);
 
@@ -572,11 +605,12 @@ class HostingPage {
     // Drag and Drop Methods
     setupDragAndDrop() {
         const waitlistBody = document.getElementById('waitlistBody');
+        if (!waitlistBody) return;
 
         waitlistBody.addEventListener('dragstart', (e) => {
             if (e.target.closest('.draggable-party')) {
-                const partyId = parseInt(e.target.closest('.draggable-party').dataset.partyId);
-                this.draggedParty = this.data.waitlist.find(p => p.id === partyId);
+                const partyId = e.target.closest('.draggable-party').dataset.partyId;
+                this.draggedParty = (this.waitlist || []).find(p => (p._id || p.id)?.toString() === partyId);
                 e.dataTransfer.effectAllowed = 'move';
             }
         });
@@ -610,7 +644,8 @@ class HostingPage {
         e.target.classList.remove('drag-over');
 
         if (this.draggedParty && this.canPartyBeSeatedAtTable(this.draggedParty, table)) {
-            this.seatPartyAtTable(this.draggedParty.id, table.id);
+            const pid = this.draggedParty._id || this.draggedParty.id;
+            this.seatPartyAtTable(pid, table.id);
         }
     }
 
@@ -712,22 +747,13 @@ class HostingPage {
         const table = room.tables.find(t => t.id === tableId);
 
         if (table && table.seatedParty) {
-            const party = this.data.waitlist.find(p => p.id === table.seatedParty.id);
-            if (party) {
-                // Reset party to waiting state
-                party.state = 'waiting';
-                party.seatedTime = null;
-                party.tableId = null;
-
-                // Reset table
-                table.state = 'ready';
-                table.seatedParty = null;
-
-                this.renderTables();
-                this.renderWaitlist();
-                this.renderRoomMetrics();
-                saveData(this.data);
-            }
+            const partyId = table.seatedParty._id || table.seatedParty.id;
+            this.updatePartyState(partyId, 'waiting').then(() => this.refreshWaitlist());
+            table.state = 'ready';
+            table.seatedParty = null;
+            this.persistRoomTables();
+            this.renderTables();
+            this.renderRoomMetrics();
         }
     }
 
@@ -736,7 +762,13 @@ class HostingPage {
         const table = room.tables.find(t => t.id === tableId);
 
         if (table && table.seatedParty) {
-            this.completeParty(table.seatedParty.id);
+            const pid = table.seatedParty._id || table.seatedParty.id;
+            this.completeParty(pid);
+            table.state = 'ready';
+            table.seatedParty = null;
+            this.persistRoomTables();
+            this.renderTables();
+            this.renderRoomMetrics();
         }
     }
 
@@ -745,7 +777,13 @@ class HostingPage {
         const table = room.tables.find(t => t.id === tableId);
 
         if (table && table.seatedParty) {
-            this.cancelParty(table.seatedParty.id);
+            const pid = table.seatedParty._id || table.seatedParty.id;
+            this.cancelParty(pid);
+            table.state = 'ready';
+            table.seatedParty = null;
+            this.persistRoomTables();
+            this.renderTables();
+            this.renderRoomMetrics();
         }
     }
 
@@ -757,7 +795,7 @@ class HostingPage {
             table.state = 'ready';
             this.renderTables();
             this.renderRoomMetrics();
-            saveData(this.data);
+            this.persistRoomTables();
         }
     }
 
@@ -769,37 +807,30 @@ class HostingPage {
             table.state = 'not-ready';
             this.renderTables();
             this.renderRoomMetrics();
-            saveData(this.data);
+            this.persistRoomTables();
         }
     }
 
     seatPartyAtTable(partyId, tableId) {
-        const partyIndex = this.data.waitlist.findIndex(p => p.id === partyId);
-        if (partyIndex === -1) return;
+        this.updatePartyState(partyId, 'seated', { tableId }).then(() => this.refreshWaitlist());
+    }
 
-        const party = this.data.waitlist[partyIndex];
-        const room = this.data.rooms[this.currentRoom];
-        const table = room.tables.find(t => t.id === tableId);
-
-        if (table && this.canPartyBeSeatedAtTable(party, table)) {
-            // Update party state
-            party.state = 'seated';
-            party.seatedTime = new Date();
-            party.tableId = tableId;
-
-            // Update table state
-            table.state = 'seated';
-            table.seatedParty = party;
-
-            this.renderTables();
-            this.renderWaitlist();
-            this.renderRoomMetrics();
-            saveData(this.data);
-        }
+    persistRoomTables(roomKey = this.currentRoom) {
+        const room = this.data.rooms[roomKey];
+        if (!room) return;
+        fetch(`${API_BASE}/rooms/${room._id || room.id || room.key}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken() || ''}`
+            },
+            body: JSON.stringify({ tables: room.tables, name: room.name })
+        }).catch(err => console.error('Save room error', err));
     }
 
     // Waitlist Sorting
     sortWaitlist(field) {
+        if (!window.appState) return;
         if (appState.waitlistSort.field === field) {
             // Toggle direction if same field
             appState.waitlistSort.direction = appState.waitlistSort.direction === 'asc' ? 'desc' : 'asc';
@@ -814,9 +845,23 @@ class HostingPage {
     }
 
     sortWaitlistData() {
-        const { field, direction } = appState.waitlistSort;
+        const { field, direction } = (window.appState?.waitlistSort) || { field: 'time', direction: 'asc' };
 
         if (!Array.isArray(this.waitlist)) return;
+
+        const getVal = (party) => {
+            if (field === 'time') {
+                const now = new Date();
+                const base = party.time ? new Date(`${now.toDateString()} ${party.time}`) : new Date(party.addedAt || now);
+                return base.getTime();
+            }
+            if (field === 'seatedTime') {
+                return new Date(party.seatedAt || party.addedAt || 0).getTime();
+            }
+            const val = party[field];
+            if (val === undefined || val === null) return '';
+            return val;
+        };
 
         this.waitlist.sort((a, b) => {
             // Sort seated parties to the bottom
@@ -830,14 +875,8 @@ class HostingPage {
             }
 
             // Both waiting - use normal sorting
-            let aVal = a[field];
-            let bVal = b[field];
-
-            if (field === 'time') {
-                const now = new Date();
-                aVal = new Date(now.toDateString() + ' ' + a.time);
-                bVal = new Date(now.toDateString() + ' ' + b.time);
-            }
+            const aVal = getVal(a);
+            const bVal = getVal(b);
 
             if (aVal < bVal) return direction === 'asc' ? -1 : 1;
             if (aVal > bVal) return direction === 'asc' ? 1 : -1;
@@ -854,6 +893,24 @@ class HostingPage {
         });
     }
 
+    async updatePartyState(partyId, state, extras = {}) {
+        const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+        if (!token) return;
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+        try {
+            await fetch(`${API_BASE}/waitlist/${partyId}/state`, {
+                method: 'PATCH',
+                headers,
+                body: JSON.stringify({ state, ...extras })
+            });
+        } catch (err) {
+            console.error('Failed to update party state', err);
+        }
+    }
+
     // Party Modal Methods
     showPartyModal(partyId = null) {
         const modal = document.getElementById('partyModal');
@@ -862,10 +919,10 @@ class HostingPage {
 
         if (partyId) {
             title.textContent = 'Edit Party';
-            const party = this.data.waitlist.find(p => p.id === partyId);
+            const party = (this.waitlist || []).find(p => (p._id || p.id)?.toString() === partyId.toString());
             if (party) {
                 this.populatePartyForm(party);
-                partyIdInput.value = party.id;
+                partyIdInput.value = party._id || party.id;
             }
         } else {
             title.textContent = 'Add New Party';
@@ -914,41 +971,35 @@ class HostingPage {
             return;
         }
 
-        // When backend wiring is complete, this should POST to /api/waitlist.
-        // For now, guard against missing waitlist.
-        if (!Array.isArray(this.waitlist)) this.waitlist = [];
+        // Create via backend
+        const payload = {
+            name,
+            size,
+            phone,
+            notes,
+            room: this.currentRoom,
+            handicap,
+            highchair,
+            window,
+            quotedMinutes: null,
+            time
+        };
 
-        if (partyId) {
-            const index = this.waitlist.findIndex(p => p._id === partyId || p.id === parseInt(partyId));
-            if (index !== -1) {
-                this.waitlist[index] = {
-                    ...this.waitlist[index],
-                    name, size, time, phone, notes, handicap, highchair, window
-                };
-            }
-        } else {
-            const newId = Math.max(0, ...this.waitlist.map(p => p.id || 0)) + 1;
-            this.waitlist.push({
-                id: newId,
-                name,
-                size,
-                time,
-                phone,
-                notes,
-                handicap,
-                highchair,
-                window,
-                state: 'waiting',
-                seatedTime: null,
-                completedTime: null,
-                tableId: null,
-                added: new Date()
+        const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+
+        const targetUrl = partyId ? `${API_BASE}/waitlist/${partyId}` : `${API_BASE}/waitlist`;
+        const method = partyId ? 'PUT' : 'POST';
+
+        fetch(targetUrl, { method, headers, body: JSON.stringify(payload) })
+            .then(() => this.refreshWaitlist())
+            .catch(err => console.error('Save party failed', err))
+            .finally(() => {
+                this.hidePartyModal();
             });
-        }
-
-        this.hidePartyModal();
-        this.renderWaitlist();
-        // TODO: replace with backend persistence
     }
 
     hidePartyModal() {
@@ -958,7 +1009,7 @@ class HostingPage {
     // Party Actions
     seatParty(partyId) {
         // Find suitable table and seat party
-        const party = this.data.waitlist.find(p => p.id === partyId);
+        const party = (this.waitlist || []).find(p => (p._id || p.id)?.toString() === partyId.toString());
         if (!party) return;
 
         const suitableTable = this.findSuitableTable(party);
@@ -970,8 +1021,7 @@ class HostingPage {
     }
 
     findSuitableTable(party) {
-        const room = this.data.rooms[this.currentRoom];
-        const availableTables = room.tables.filter(t => t.state === 'ready');
+        const availableTables = this.getRoomTablesWithSeating().filter(t => t.state === 'ready');
 
         // First try to find a table that matches all requirements
         let suitableTable = availableTables.find(t =>
@@ -1015,112 +1065,37 @@ class HostingPage {
 
     removeParty(partyId) {
         if (confirm('Are you sure you want to remove this party from the waitlist?')) {
-            this.data.waitlist = this.data.waitlist.filter(p => p.id !== partyId);
-            this.renderWaitlist();
-            saveData(this.data);
+            this.updatePartyState(partyId, 'cancelled').then(() => this.refreshWaitlist());
         }
     }
 
     unseatParty(partyId) {
-        const party = this.data.waitlist.find(p => p.id === partyId);
+        const party = (this.waitlist || []).find(p => (p._id || p.id)?.toString() === partyId.toString());
         if (!party || party.state !== 'seated') return;
-
-        // Reset party to waiting state
-        party.state = 'waiting';
-        party.seatedTime = null;
-
-        // Free up the table
-        if (party.tableId) {
-            const room = this.data.rooms[this.currentRoom];
-            const table = room.tables.find(t => t.id === party.tableId);
-            if (table) {
-                table.state = 'ready';
-                table.seatedParty = null;
-            }
-            party.tableId = null;
-        }
-
-        this.renderTables();
-        this.renderWaitlist();
-        this.renderRoomMetrics();
-        saveData(this.data);
+        this.updatePartyState(partyId, 'waiting').then(() => this.refreshWaitlist());
     }
 
     completeParty(partyId) {
-        const partyIndex = this.data.waitlist.findIndex(p => p.id === partyId);
-        if (partyIndex === -1) return;
-
-        const party = this.data.waitlist[partyIndex];
-
-        // Move party to history
-        const completedParty = {
-            ...party,
-            completedTime: new Date(),
-            status: 'Completed'
-        };
-
-        this.data.history.push(completedParty);
-
-        // Remove from waitlist
-        this.data.waitlist.splice(partyIndex, 1);
-
-        // Mark table as not-ready (orange)
-        if (party.tableId) {
-            const room = this.data.rooms[this.currentRoom];
-            const table = room.tables.find(t => t.id === party.tableId);
-            if (table) {
-                table.state = 'not-ready';
-                table.seatedParty = null;
-            }
-        }
-
-        this.renderTables();
-        this.renderWaitlist();
-        this.renderRoomMetrics();
-        saveData(this.data);
+        this.updatePartyState(partyId, 'completed').then(() => this.refreshWaitlist());
     }
 
     cancelParty(partyId) {
         if (confirm('Are you sure you want to cancel this party? This will remove them from the system.')) {
-            const partyIndex = this.data.waitlist.findIndex(p => p.id === partyId);
-            if (partyIndex === -1) return;
-
-            const party = this.data.waitlist[partyIndex];
-
-            // Move party to history with cancelled status
-            const cancelledParty = {
-                ...party,
-                cancelledTime: new Date(),
-                status: 'Cancelled'
-            };
-
-            this.data.history.push(cancelledParty);
-
-            // Remove from waitlist
-            this.data.waitlist.splice(partyIndex, 1);
-
-            // Mark table as not-ready (orange)
-            if (party.tableId) {
-                const room = this.data.rooms[this.currentRoom];
-                const table = room.tables.find(t => t.id === party.tableId);
-                if (table) {
-                    table.state = 'not-ready';
-                    table.seatedParty = null;
-                }
-            }
-
-            this.renderTables();
-            this.renderWaitlist();
-            this.renderRoomMetrics();
-            saveData(this.data);
+            this.updatePartyState(partyId, 'cancelled').then(() => this.refreshWaitlist());
         }
     }
 
     filterWaitlist(searchTerm) {
-        const filteredParties = this.data.waitlist.filter(party =>
-            party.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            party.phone.includes(searchTerm) ||
-            party.notes.toLowerCase().includes(searchTerm.toLowerCase())
+        const term = (searchTerm || '').trim().toLowerCase();
+        if (!term) {
+            this.renderWaitlist();
+            return;
+        }
+
+        const filteredParties = (this.waitlist || []).filter(party =>
+            (party.name || '').toLowerCase().includes(term) ||
+            (party.phone || '').includes(term) ||
+            (party.notes || '').toLowerCase().includes(term)
         );
 
         this.renderFilteredWaitlist(filteredParties);

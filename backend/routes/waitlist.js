@@ -37,7 +37,8 @@ router.post("/", async (req, res) => {
       handicap,
       highchair,
       window,
-      quotedMinutes
+      quotedMinutes,
+      time
     } = req.body;
 
     if (!name || !size) {
@@ -47,14 +48,15 @@ router.post("/", async (req, res) => {
     const party = await Party.create({
       user: req.userId,
       name,
-      size,
+      size: Number(size),
       phone,
       notes,
       room: room || "main",
       handicap: !!handicap,
       highchair: !!highchair,
       window: !!window,
-      quotedMinutes: quotedMinutes || null
+      quotedMinutes: quotedMinutes || null,
+      time: time || null
     });
 
     res.status(201).json({ party });
@@ -64,7 +66,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// PATCH /api/waitlist/:id/state → state transitions
+// PATCH /api/waitlist/:id/state - state transitions
 router.patch("/:id/state", async (req, res) => {
   try {
     const { state, tableId, cancelReason } = req.body;
@@ -98,6 +100,48 @@ router.patch("/:id/state", async (req, res) => {
     res.json({ party });
   } catch (err) {
     console.error("Update state error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// PUT /api/waitlist/:id - update party details
+router.put("/:id", async (req, res) => {
+  try {
+    const {
+      name,
+      size,
+      phone,
+      notes,
+      room,
+      handicap,
+      highchair,
+      window,
+      quotedMinutes,
+      time
+    } = req.body;
+
+    const party = await Party.findOne({
+      _id: req.params.id,
+      user: req.userId
+    });
+
+    if (!party) return res.status(404).json({ error: "Party not found" });
+
+    if (name !== undefined) party.name = name;
+    if (size !== undefined) party.size = Number(size);
+    if (phone !== undefined) party.phone = phone;
+    if (notes !== undefined) party.notes = notes;
+    if (room !== undefined) party.room = room;
+    if (handicap !== undefined) party.handicap = !!handicap;
+    if (highchair !== undefined) party.highchair = !!highchair;
+    if (window !== undefined) party.window = !!window;
+    if (quotedMinutes !== undefined) party.quotedMinutes = quotedMinutes;
+    if (time !== undefined) party.time = time;
+
+    await party.save();
+    res.json({ party });
+  } catch (err) {
+    console.error("Update party error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
