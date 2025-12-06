@@ -2,7 +2,7 @@
 
 // UPDATE THIS to your actual backend Render URL
 // Example: const PRODUCTION_API_BASE = 'https://cohost2-backend.onrender.com/api';
-const PRODUCTION_API_BASE = 'https://cohost2-backend.onrender.com/'; // <-- change this
+const PRODUCTION_API_BASE = 'https://cohost2-backend.onrender.com/api'; // <-- change this
 
 // Local dev vs production
 const API_BASE_URL = window.location.hostname === 'localhost'

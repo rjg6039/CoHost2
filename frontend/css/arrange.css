@@ -368,27 +368,31 @@ Arrange Page Styles with Grid
     border-radius: 8px;
     width: 80px !important;  /* Exactly 2 grid units (2 × 40px) */
     height: 80px !important; /* Exactly 2 grid units */
+    margin: 0 !important;    /* Remove any margin that could affect alignment */
 }
 
 .table-item.arrange.circle {
     border-radius: 50%;
     width: 80px !important;  /* Exactly 2 grid units */
     height: 80px !important; /* Exactly 2 grid units */
+    margin: 0 !important;
 }
 
 .table-item.arrange.vertical {
     border-radius: 8px;
     width: 40px !important;   /* Exactly 1 grid unit */
     height: 120px !important; /* Exactly 3 grid units */
+    margin: 0 !important;
 }
 
 .table-item.arrange.horizontal {
     border-radius: 8px;
     width: 120px !important; /* Exactly 3 grid units */
     height: 40px !important;  /* Exactly 1 grid unit */
+    margin: 0 !important;
 }
 
-/* Add moving state with 50% opacity */
+/* Moving table opacity */
 .table-item.arrange.moving {
     opacity: 0.5 !important;
     z-index: 100;
@@ -447,4 +451,9 @@ Arrange Page Styles with Grid
     z-index: 100;
     cursor: grabbing;
     transition: opacity 0.2s ease;
+}
+
+/* Ensure regular tables have full opacity */
+.table-item.arrange:not(.moving) {
+    opacity: 1;
 }

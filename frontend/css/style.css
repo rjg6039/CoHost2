@@ -403,4 +403,3 @@ html:not(.dark-mode) {
 .table-item, .waitlist-table tr, .room-pin, .context-menu {
     transition: all 0.3s ease var(--transition-disable);
 }
-

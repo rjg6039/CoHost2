@@ -8,7 +8,7 @@
     height: calc(100vh - 180px);
 }
 
-.room-metrics-container {
+room-metrics-container {
     display: flex;
     gap: 15px;
     margin-bottom: 20px;
@@ -42,7 +42,7 @@
     border: 1px solid var(--border-color);
 }
 
-.resize-handle {
+resize-handle {
     width: 8px;
     background: var(--border-color);
     cursor: col-resize;
@@ -435,6 +435,10 @@
 
 .context-menu-item.success {
     color: var(--success-color);
+}
+
+.context-menu-item.info {
+    color: var(--info-color);
 }
 
 /* Make sure tables are properly clickable */
