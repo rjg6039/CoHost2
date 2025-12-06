@@ -185,7 +185,7 @@ class HostingPage {
                     headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
                 });
                 const roomPayload = await roomRes.json().catch(() => ({}));
-                if (roomRes.ok && Array.isArray(roomPayload.rooms) && roomPayload.rooms.length) {
+                if (roomRes.ok && roomPayload.rooms) {
                     this.data.rooms = {};
                     roomPayload.rooms.forEach(r => {
                         this.data.rooms[r.key] = { ...r, name: r.name, tables: r.tables || [] };
@@ -193,28 +193,36 @@ class HostingPage {
                     this.currentRoom = this.data.rooms[this.currentRoom] ? this.currentRoom : roomPayload.rooms[0].key;
                 } else {
                     this.data.rooms = {};
-                    const list = data.rooms.length ? data.rooms : ['main'];
-                    list.forEach(r => this.data.rooms[r] = { name: r, tables: [] });
-                    this.currentRoom = list.includes(this.currentRoom) ? this.currentRoom : list[0];
+                    data.rooms.forEach(r => this.data.rooms[r] = { name: r, tables: [] });
+                    this.currentRoom = data.rooms[0];
                 }
                 this.renderRoomMetrics();
                 this.renderTables();
-                const select = document.getElementById('roomSelect');
-                if (select) {
-                    const keys = Object.keys(this.data.rooms);
-                    const options = keys.length ? keys : ['main'];
-                    select.innerHTML = options.map(r => `<option value="${r}">${this.data.rooms[r]?.name || r}</option>`).join('');
-                    select.value = this.currentRoom || options[0];
-                }
+                const keys = Object.keys(this.data.rooms);
+                const options = keys.length ? keys : ['main'];
+                this.setRoomOptions(options);
             }
         } catch (err) {
             console.warn("Unable to refresh rooms", err);
-            const select = document.getElementById('roomSelect');
-            if (select && !select.innerHTML) {
-                select.innerHTML = `<option value="main">Main</option>`;
-                select.value = 'main';
-            }
+            this.setRoomOptions(['main']);
         }
+    }
+
+    setRoomOptions(options) {
+        const select = document.getElementById('roomSelect');
+        if (!select) return;
+        const unique = Array.from(new Set(options.length ? options : ['main']));
+        if (!unique.length) unique.push('main');
+        select.innerHTML = unique.map(r => {
+            const label =
+                this.data.rooms?.[r]?.name ||
+                (r === 'main' ? 'Main' : r.charAt(0).toUpperCase() + r.slice(1));
+            return `<option value="${r}">${label}</option>`;
+        }).join('');
+        if (!unique.includes(this.currentRoom)) {
+            this.currentRoom = unique[0];
+        }
+        select.value = this.currentRoom;
     }
 
     renderRoomMetrics() {
