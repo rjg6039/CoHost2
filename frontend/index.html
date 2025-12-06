@@ -8,98 +8,153 @@
     <link rel="stylesheet" href="css/hosting.css">
 </head>
 <body>
-<!-- Header -->
+<!-- Header Navigation -->
 <header class="app-header">
-    <div class="header-content">
-        <h1 class="app-title">CoHost</h1>
-        <nav class="main-nav">
-            <a href="index.html" class="nav-link active">Hosting</a>
-            <a href="analytics.html" class="nav-link">Analytics</a>
-            <a href="history.html" class="nav-link">History</a>
-            <a href="arrange.html" class="nav-link">Arrange</a>
-            <a href="settings.html" class="nav-link">Settings</a>
-            <button class="logout-btn" id="logoutBtn">Logout</button>
+    <div class="header-container">
+        <div class="logo-section">
+            <h1 class="app-logo">CoHost</h1>
+            <span class="app-subtitle">Restaurant Management</span>
+        </div>
+
+        <nav class="main-navigation">
+            <a href="index.html" class="nav-item active">
+                <span class="nav-icon">🏠</span>
+                Hosting
+            </a>
+            <a href="analytics.html" class="nav-item">
+                <span class="nav-icon">📊</span>
+                Analytics
+            </a>
+            <a href="history.html" class="nav-item">
+                <span class="nav-icon">📋</span>
+                History
+            </a>
+            <a href="arrange.html" class="nav-item">
+                <span class="nav-icon">🪑</span>
+                Arrange
+            </a>
+            <a href="settings.html" class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                Settings
+            </a>
+            <button class="logout-btn" id="logoutBtn">
+                <span class="nav-icon">🚪</span>
+                Logout
+            </button>
         </nav>
     </div>
 </header>
 
-<!-- Main Content -->
-<main class="main-content">
-    <!-- Room Metrics Dashboard -->
-    <section class="metrics-dashboard">
-        <div class="dashboard-header">
-            <h2>Restaurant Overview</h2>
-            <div class="room-selector">
-                <select id="roomSelect" class="room-dropdown">
-                    <option value="main">Main Dining</option>
-                    <option value="patio">Patio</option>
-                    <option value="bar">Bar Area</option>
+<!-- Main Dashboard -->
+<main class="dashboard-container">
+    <!-- Room Selection & Metrics -->
+    <section class="dashboard-header">
+        <div class="header-controls">
+            <h2 class="dashboard-title">Restaurant Dashboard</h2>
+            <div class="control-group">
+                <select id="roomSelect" class="room-selector">
+                    <option value="main">Main Dining Room</option>
+                    <option value="patio">Patio Area</option>
+                    <option value="bar">Bar Section</option>
                     <option value="private">Private Room</option>
                 </select>
+                <button class="btn-primary" id="refreshData">
+                    <span>🔄</span> Refresh
+                </button>
             </div>
         </div>
 
-        <div class="metrics-grid" id="roomMetricsContainer">
-            <!-- Metrics will be populated by JavaScript -->
+        <!-- Live Metrics -->
+        <div class="live-metrics" id="liveMetrics">
+            <div class="metric-card">
+                <div class="metric-value" id="totalParties">0</div>
+                <div class="metric-label">Total Parties</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="waitingParties">0</div>
+                <div class="metric-label">Waiting</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="seatedParties">0</div>
+                <div class="metric-label">Seated</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="availableTables">0</div>
+                <div class="metric-label">Available Tables</div>
+            </div>
         </div>
     </section>
 
     <!-- Interactive Layout -->
     <section class="interactive-layout">
-        <div class="layout-container">
-            <!-- Table View Section -->
-            <div class="table-section">
-                <div class="section-header">
-                    <h3>Table Management</h3>
-                    <div class="table-filters">
-                        <label class="filter-option">
+        <!-- Table Management Panel -->
+        <div class="layout-panel table-panel">
+            <div class="panel-header">
+                <h3>Table Management</h3>
+                <div class="panel-actions">
+                    <div class="filter-group">
+                        <label class="filter-toggle">
                             <input type="checkbox" id="filterHandicap">
-                            ♿ Accessibility
+                            ♿ Accessible
                         </label>
-                        <label class="filter-option">
+                        <label class="filter-toggle">
                             <input type="checkbox" id="filterHighchair">
-                            👶 Highchairs
+                            👶 Family
                         </label>
-                        <label class="filter-option">
+                        <label class="filter-toggle">
                             <input type="checkbox" id="filterWindow">
-                            🪟 Window Views
+                            🪟 Window
                         </label>
                     </div>
                 </div>
-                <div class="table-canvas" id="tableView">
-                    <!-- Tables will be rendered here -->
-                </div>
             </div>
 
-            <!-- Waitlist Section -->
-            <div class="waitlist-section">
-                <div class="section-header">
-                    <h3>Waitlist <span class="badge" id="waitlistCount">0</span></h3>
-                    <button class="btn-primary" id="addPartyBtn">
-                        <span>+</span> Add Party
-                    </button>
+            <div class="table-canvas" id="tableView">
+                <div class="empty-state" id="tableEmptyState">
+                    <div class="empty-icon">🪑</div>
+                    <h4>No Tables Configured</h4>
+                    <p>Set up your table layout in the Arrange section</p>
                 </div>
+            </div>
+        </div>
 
-                <div class="search-bar">
-                    <input type="text" id="searchInput" placeholder="Search parties...">
-                </div>
+        <!-- Waitlist Panel -->
+        <div class="layout-panel waitlist-panel">
+            <div class="panel-header">
+                <h3>Waitlist <span class="badge" id="waitlistCount">0</span></h3>
+                <button class="btn-primary" id="addPartyBtn">
+                    <span>➕</span> Add Party
+                </button>
+            </div>
 
-                <div class="waitlist-table-container">
-                    <table class="waitlist-table">
-                        <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Size</th>
-                            <th>Time</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody id="waitlistBody">
-                        <!-- Waitlist items will be populated here -->
-                        </tbody>
-                    </table>
-                </div>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search parties by name, phone, or notes...">
+            </div>
+
+            <div class="waitlist-container" id="waitlistContainer">
+                <table class="waitlist-table">
+                    <thead>
+                    <tr>
+                        <th data-sort="name">Name</th>
+                        <th data-sort="size">Size</th>
+                        <th data-sort="addedAt">Added</th>
+                        <th data-sort="state">Status</th>
+                        <th>Requirements</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="waitlistBody">
+                    <tr class="empty-row">
+                        <td colspan="6">
+                            <div class="empty-waitlist">
+                                <div class="empty-icon">👥</div>
+                                <h4>No Parties on Waitlist</h4>
+                                <p>Add your first party to get started</p>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </section>
@@ -109,39 +164,46 @@
 <div id="partyModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Add New Party</h3>
-            <span class="close-modal" id="closePartyModal">&times;</span>
+            <h3 id="modalTitle">Add New Party</h3>
+            <button class="close-modal" id="closePartyModal">&times;</button>
         </div>
         <div class="modal-body">
             <form id="partyForm">
                 <div class="form-group">
-                    <label>Party Name *</label>
-                    <input type="text" id="partyName" required>
+                    <label for="partyName">Party Name *</label>
+                    <input type="text" id="partyName" required placeholder="Enter party name">
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Party Size *</label>
-                        <input type="number" id="partySize" min="1" max="20" required>
+                        <label for="partySize">Party Size *</label>
+                        <input type="number" id="partySize" min="1" max="50" required value="2">
                     </div>
                     <div class="form-group">
-                        <label>Seating Time *</label>
-                        <input type="time" id="seatingTime" required>
+                        <label for="partyPhone">Phone Number</label>
+                        <input type="tel" id="partyPhone" placeholder="Optional phone number">
                     </div>
                 </div>
                 <div class="form-group">
+                    <label for="partyNotes">Notes</label>
+                    <textarea id="partyNotes" placeholder="Special requests, allergies, etc." rows="3"></textarea>
+                </div>
+                <div class="form-group">
                     <label>Special Requirements</label>
-                    <div class="requirement-options">
+                    <div class="requirements-grid">
                         <label class="requirement-option">
                             <input type="checkbox" id="requireHandicap">
-                            ♿ Handicap Access
+                            <span class="requirement-icon">♿</span>
+                            Handicap Access
                         </label>
                         <label class="requirement-option">
                             <input type="checkbox" id="requireHighchair">
-                            👶 Highchair Needed
+                            <span class="requirement-icon">👶</span>
+                            Highchair Needed
                         </label>
                         <label class="requirement-option">
                             <input type="checkbox" id="requireWindow">
-                            🪟 Window Seat
+                            <span class="requirement-icon">🪟</span>
+                            Window Seat
                         </label>
                     </div>
                 </div>
@@ -156,6 +218,7 @@
 
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/hosting.js"></script>
 </body>
 </html>
