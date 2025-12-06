@@ -33,6 +33,25 @@ class HostingPage {
         this.refreshRooms();
     }
 
+    async refreshWaitlist() {
+        try {
+            const res = await fetch(`${API_BASE}/waitlist`, {
+                headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
+            });
+            const data = await res.json();
+            if (res.ok && data.parties) {
+                this.waitlist = data.parties;
+            } else {
+                this.waitlist = [];
+            }
+        } catch (err) {
+            console.warn("Unable to refresh waitlist", err);
+            this.waitlist = [];
+        }
+        this.renderWaitlist();
+        this.renderTables();
+    }
+
     setupEventListeners() {
         // Room selection
         document.getElementById('roomSelect').addEventListener('change', (e) => {
