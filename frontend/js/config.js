@@ -27,6 +27,33 @@ function logout() {
     window.location.href = 'login.html';
 }
 
+// Enhanced API request function
+async function apiRequest(path, options = {}) {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+        ...options.headers
+    };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}${path}`, {
+            ...options,
+            headers
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('API Request failed:', error);
+        throw error;
+    }
+}
+
 // Redirect to login if not authenticated
 function requireAuth() {
     if (!getAuthToken()) {
@@ -34,4 +61,11 @@ function requireAuth() {
         return false;
     }
     return true;
+}
+
+// Check authentication status on page load
+function checkAuth() {
+    if (!getAuthToken() && !window.location.pathname.includes('login.html')) {
+        window.location.href = 'login.html';
+    }
 }
