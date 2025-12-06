@@ -5,6 +5,9 @@ class HostingPage {
         this.currentRoom = appState.currentRoom;
         this.draggedParty = null;
         this.contextMenu = null;
+        this.roomOrigin = { x: 0, y: 0 };
+        this.isPanning = false;
+        this.panStart = { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 };
 
         this.filters = {
             handicap: false,
@@ -18,6 +21,7 @@ class HostingPage {
     init() {
         this.setupEventListeners();
         this.renderPage();
+        this.setupTableViewPan();
     }
 
     setupEventListeners() {
@@ -80,6 +84,39 @@ class HostingPage {
         // Prevent context menu on right click
         document.addEventListener('contextmenu', (e) => {
             e.preventDefault();
+        });
+    }
+
+    setupTableViewPan() {
+        const view = document.getElementById('tableView');
+        if (!view || view._panSetup) return;
+        view._panSetup = true;
+
+        view.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            if (e.target.closest('.table-item')) return;
+            this.isPanning = true;
+            this.panStart = {
+                x: e.clientX,
+                y: e.clientY,
+                scrollLeft: view.scrollLeft,
+                scrollTop: view.scrollTop
+            };
+            view.classList.add('panning');
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!this.isPanning) return;
+            const dx = e.clientX - this.panStart.x;
+            const dy = e.clientY - this.panStart.y;
+            view.scrollLeft = this.panStart.scrollLeft - dx;
+            view.scrollTop = this.panStart.scrollTop - dy;
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (!this.isPanning) return;
+            this.isPanning = false;
+            view.classList.remove('panning');
         });
     }
 
@@ -175,10 +212,32 @@ class HostingPage {
         // Filter tables based on active filters
         const filteredTables = this.filterTables(room.tables);
 
+        let minX = 0, minY = 0, maxX = 0, maxY = 0;
+        if (filteredTables.length) {
+            minX = Math.min(...filteredTables.map(t => t.x));
+            minY = Math.min(...filteredTables.map(t => t.y));
+            maxX = Math.max(...filteredTables.map(t => t.x));
+            maxY = Math.max(...filteredTables.map(t => t.y));
+        }
+        const padding = 300;
+        const width = Math.max(1200, maxX - minX + padding * 2);
+        const height = Math.max(900, maxY - minY + padding * 2);
+        this.roomOrigin = filteredTables.length ? { x: (minX + maxX) / 2, y: (minY + maxY) / 2 } : { x: 0, y: 0 };
+
+        const stage = document.createElement('div');
+        stage.className = 'table-stage';
+        stage.style.position = 'relative';
+        stage.style.width = `${width}px`;
+        stage.style.height = `${height}px`;
+
         filteredTables.forEach(table => {
             const tableEl = this.createTableElement(table);
-            tableView.appendChild(tableEl);
+            stage.appendChild(tableEl);
         });
+
+        tableView.appendChild(stage);
+        tableView.scrollLeft = stage.clientWidth / 2 - tableView.clientWidth / 2;
+        tableView.scrollTop = stage.clientHeight / 2 - tableView.clientHeight / 2;
     }
 
     filterTables(tables) {
@@ -210,8 +269,9 @@ class HostingPage {
     createTableElement(table) {
         const tableEl = document.createElement('div');
         tableEl.className = `table-item ${table.state}`;
-        tableEl.style.left = `${table.x}px`;
-        tableEl.style.top = `${table.y}px`;
+        const origin = this.roomOrigin || { x: 0, y: 0 };
+        tableEl.style.left = `calc(50% + ${table.x - origin.x}px)`;
+        tableEl.style.top = `calc(50% + ${table.y - origin.y}px)`;
         tableEl.dataset.tableId = table.id;
 
         // Add a subtle visual indication when filters are active and table matches

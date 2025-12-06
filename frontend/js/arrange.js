@@ -65,6 +65,14 @@ class ArrangePage {
                     tables: [
                         { id: 41, section: 1, number: 1, capacity: 8, x: 0, y: 0, shape: 'horizontal', handicap: true, highchair: true, window: false, state: "not-ready" }
                     ]
+                },
+                lounge: {
+                    name: "Lounge",
+                    tables: [
+                        { id: 51, section: 1, number: 1, capacity: 4, x: -120, y: -80, shape: 'square', handicap: false, highchair: false, window: true, state: "ready" },
+                        { id: 52, section: 1, number: 2, capacity: 4, x: 120, y: -80, shape: 'square', handicap: false, highchair: true, window: false, state: "ready" },
+                        { id: 53, section: 1, number: 3, capacity: 2, x: 0, y: 80, shape: 'circle', handicap: false, highchair: false, window: false, state: "ready" }
+                    ]
                 }
             }
         });
@@ -101,7 +109,21 @@ class ArrangePage {
     }
 
     saveData() {
-        localStorage.setItem('cohost-data', JSON.stringify(this.data));
+        // Merge with existing to avoid clobbering waitlist/history when only rooms change
+        let existing = {};
+        try {
+            existing = JSON.parse(localStorage.getItem('cohost-data')) || {};
+        } catch (err) {
+            existing = {};
+        }
+
+        const merged = {
+            waitlist: this.data.waitlist || existing.waitlist || [],
+            history: this.data.history || existing.history || [],
+            rooms: this.data.rooms || existing.rooms || {}
+        };
+
+        localStorage.setItem('cohost-data', JSON.stringify(merged));
     }
 
     setupEventListeners() {
@@ -612,6 +634,9 @@ class ArrangePage {
         const tablePadding = 400;
         const roomWidth = Math.max(1600, maxX - minX + tablePadding * 2);
         const roomHeight = Math.max(1200, maxY - minY + tablePadding * 2);
+        const originX = hasTables ? (minX + maxX) / 2 : 0;
+        const originY = hasTables ? (minY + maxY) / 2 : 0;
+        this.roomOrigin = { x: originX, y: originY };
 
         const roomContainer = document.createElement('div');
         roomContainer.className = 'room-container';
@@ -622,7 +647,7 @@ class ArrangePage {
         this.roomContainer = roomContainer;
 
         if (this.state.showGrid) {
-            this.createGrid(roomContainer, roomWidth, roomHeight);
+            this.createGrid(roomContainer, roomWidth, roomHeight, originX, originY);
         }
 
         if (room.tables) {
@@ -645,11 +670,13 @@ class ArrangePage {
 
         canvas.appendChild(roomContainer);
 
-        canvas.scrollLeft = roomWidth / 2 - canvas.clientWidth / 2;
-        canvas.scrollTop = roomHeight / 2 - canvas.clientHeight / 2;
+        const centerScrollLeft = roomContainer.clientWidth / 2 - canvas.clientWidth / 2;
+        const centerScrollTop = roomContainer.clientHeight / 2 - canvas.clientHeight / 2;
+        canvas.scrollLeft = centerScrollLeft;
+        canvas.scrollTop = centerScrollTop;
     }
 
-    createGrid(container, width, height) {
+    createGrid(container, width, height, originX = 0, originY = 0) {
         const grid = document.createElement('div');
         grid.className = 'arrange-grid';
         grid.style.position = 'absolute';
@@ -672,7 +699,7 @@ class ArrangePage {
             linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px)
         `;
         gridPattern.style.backgroundSize = `${gridSize}px ${gridSize}px`;
-        gridPattern.style.backgroundPosition = `calc(50% - ${width/2}px) calc(50% - ${height/2}px)`;
+        gridPattern.style.backgroundPosition = `calc(50% - ${gridSize / 2}px) calc(50% - ${gridSize / 2}px)`;
         gridPattern.style.opacity = '0.4';
 
         grid.appendChild(gridPattern);
@@ -685,10 +712,11 @@ class ArrangePage {
         tableElement.dataset.tableId = table.id;
 
         const size = this.getTableSize(table.shape);
+        const origin = this.roomOrigin || { x: 0, y: 0 };
 
         tableElement.style.position = 'absolute';
-        tableElement.style.left = `calc(50% + ${table.x}px)`;
-        tableElement.style.top = `calc(50% + ${table.y}px)`;
+        tableElement.style.left = `calc(50% + ${table.x - origin.x}px)`;
+        tableElement.style.top = `calc(50% + ${table.y - origin.y}px)`;
         tableElement.style.width = `${size.width}px`;
         tableElement.style.height = `${size.height}px`;
         tableElement.style.transform = 'translate(-50%, -50%)';
