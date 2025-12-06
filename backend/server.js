@@ -1,3 +1,4 @@
+// backend/server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -22,7 +23,7 @@ if (!process.env.JWT_SECRET) {
   console.warn("[Startup] JWT_SECRET is not set.");
 }
 
-// base middleware
+// Base middleware
 app.use(cors());
 app.use(express.json());
 
@@ -31,11 +32,11 @@ app.use("/api/auth", authRoutes);
 app.use("/api/waitlist", waitlistRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
-// Optionally serve frontend in production (Render single service)
-// Assumes frontend built / or just static HTML in ../frontend
+// Serve frontend from ../frontend
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendPath = path.join(__dirname, "..", "frontend");
+
 app.use(express.static(frontendPath));
 
 app.get("*", (req, res) => {
@@ -44,7 +45,7 @@ app.get("*", (req, res) => {
 
 // Mongo + start
 mongoose
-  .connect(MONGODB_URI, { dbName: "cohost2" })
+  .connect(MONGODB_URI) // <- DB name comes from URI (…/cohost2)
   .then(() => {
     console.log("[Mongo] Connected");
     app.listen(PORT, () => {
