@@ -11,7 +11,8 @@ class ArrangePage {
             selectedIcon: 'square',
             showGrid: true,
             isMovingTable: false,
-            dragOffset: { x: 0, y: 0 }
+            dragOffset: { x: 0, y: 0 },
+            menuJustOpened: false
         };
 
         // Grid constants based on 40px grid
@@ -35,44 +36,68 @@ class ArrangePage {
     loadData() {
         const savedData = localStorage.getItem('cohost-data');
         if (savedData) {
-            return JSON.parse(savedData);
+            const data = JSON.parse(savedData);
+            return this.normalizeMainLayout(data);
         }
 
-        return {
+        return this.normalizeMainLayout({
             waitlist: [],
             history: [],
             rooms: {
                 main: {
                     name: "Main Dining Room",
-                    tables: [
-                        { id: 1, section: 1, number: 1, capacity: 4, x: -160, y: -120, shape: 'square', handicap: false, highchair: true, window: false, state: "ready" },
-                        { id: 2, section: 1, number: 2, capacity: 4, x: 160, y: -120, shape: 'square', handicap: false, highchair: false, window: true, state: "ready" },
-                        { id: 3, section: 1, number: 3, capacity: 4, x: -160, y: 120, shape: 'square', handicap: false, highchair: true, window: false, state: "ready" },
-                        { id: 4, section: 1, number: 4, capacity: 4, x: 160, y: 120, shape: 'square', handicap: false, highchair: false, window: false, state: "ready" },
-                        { id: 5, section: 2, number: 1, capacity: 2, x: -320, y: 0, shape: 'circle', handicap: true, highchair: false, window: false, state: "ready" },
-                        { id: 6, section: 2, number: 2, capacity: 6, x: 320, y: 0, shape: 'horizontal', handicap: false, highchair: true, window: false, state: "seated", seatedParty: { id: 1, name: "Johnson Family", size: 4 } }
-                    ]
+                    tables: this.getDefaultMainTables()
                 },
                 patio: {
                     name: "Patio",
                     tables: [
-                        { id: 7, section: 1, number: 1, capacity: 4, x: 0, y: 0, shape: 'square', handicap: false, highchair: false, window: true, state: "ready" }
+                        { id: 21, section: 1, number: 1, capacity: 4, x: 0, y: 0, shape: 'square', handicap: false, highchair: false, window: true, state: "ready" }
                     ]
                 },
                 bar: {
                     name: "Bar Area",
                     tables: [
-                        { id: 8, section: 1, number: 1, capacity: 2, x: 0, y: 0, shape: 'vertical', handicap: false, highchair: false, window: false, state: "seated", seatedParty: { id: 2, name: "Smith Group", size: 6 } }
+                        { id: 31, section: 1, number: 1, capacity: 2, x: 0, y: 0, shape: 'vertical', handicap: false, highchair: false, window: false, state: "seated", seatedParty: { id: 2, name: "Smith Group", size: 6 } }
                     ]
                 },
                 private: {
                     name: "Private Dining",
                     tables: [
-                        { id: 9, section: 1, number: 1, capacity: 8, x: 0, y: 0, shape: 'horizontal', handicap: true, highchair: true, window: false, state: "not-ready" }
+                        { id: 41, section: 1, number: 1, capacity: 8, x: 0, y: 0, shape: 'horizontal', handicap: true, highchair: true, window: false, state: "not-ready" }
                     ]
                 }
             }
-        };
+        });
+    }
+
+    getDefaultMainTables() {
+        return [
+            { id: 1, section: 1, number: 1, capacity: 4, x: -240, y: -160, shape: 'square', handicap: false, highchair: true, window: false, state: "ready" },
+            { id: 2, section: 1, number: 2, capacity: 4, x: 0, y: -160, shape: 'square', handicap: false, highchair: false, window: true, state: "ready" },
+            { id: 3, section: 1, number: 3, capacity: 4, x: 240, y: -160, shape: 'square', handicap: false, highchair: true, window: false, state: "ready" },
+            { id: 4, section: 1, number: 4, capacity: 4, x: -240, y: 40, shape: 'square', handicap: false, highchair: false, window: false, state: "ready" },
+            { id: 5, section: 1, number: 5, capacity: 2, x: 0, y: 40, shape: 'circle', handicap: true, highchair: false, window: false, state: "ready" },
+            { id: 6, section: 1, number: 6, capacity: 6, x: 240, y: 40, shape: 'horizontal', handicap: false, highchair: true, window: false, state: "seated", seatedParty: { id: 1, name: "Johnson Family", size: 4 } },
+            { id: 7, section: 2, number: 7, capacity: 4, x: -240, y: 240, shape: 'square', handicap: false, highchair: false, window: true, state: "ready" },
+            { id: 8, section: 2, number: 8, capacity: 4, x: 0, y: 240, shape: 'square', handicap: true, highchair: false, window: false, state: "ready" }
+        ];
+    }
+
+    normalizeMainLayout(data) {
+        const tables = data?.rooms?.main?.tables;
+        if (!tables || tables.length === 0) return data;
+
+        const xs = tables.map(t => t.x);
+        const ys = tables.map(t => t.y);
+        const spreadX = Math.max(...xs) - Math.min(...xs);
+        const spreadY = Math.max(...ys) - Math.min(...ys);
+
+        // If everything collapsed into a corner (< 200px spread), reset to default layout
+        if (spreadX < 200 && spreadY < 200) {
+            data.rooms.main.tables = this.getDefaultMainTables();
+        }
+
+        return data;
     }
 
     saveData() {
@@ -122,6 +147,10 @@ class ArrangePage {
         document.addEventListener('click', (e) => {
             const contextMenu = document.getElementById('arrangeContextMenu');
             if (contextMenu && !contextMenu.contains(e.target) && !e.target.closest('.table-item')) {
+                if (this.state.menuJustOpened) {
+                    this.state.menuJustOpened = false;
+                    return;
+                }
                 this.hideContextMenu();
             }
         });
@@ -148,6 +177,7 @@ class ArrangePage {
             contextMenu.style.display = 'none';
             contextMenu.innerHTML = '';
         }
+        this.state.menuJustOpened = false;
     }
 
     getTableSize(tableShape) {
@@ -205,19 +235,35 @@ class ArrangePage {
         return false;
     }
 
+    getCanvasCoordinates(e) {
+        if (!this.roomContainer) {
+            const canvasRect = document.getElementById('arrangeCanvas').getBoundingClientRect();
+            return {
+                x: e.clientX - (canvasRect.left + canvasRect.width / 2),
+                y: e.clientY - (canvasRect.top + canvasRect.height / 2)
+            };
+        }
+
+        const rect = this.roomContainer.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        return {
+            x: e.clientX - centerX,
+            y: e.clientY - centerY
+        };
+    }
+
     handleCanvasMouseDown(e) {
         if (e.button !== 0) return;
 
-        const rect = document.getElementById('arrangeCanvas').getBoundingClientRect();
-        const canvasX = e.clientX - rect.left;
-        const canvasY = e.clientY - rect.top;
+        const { x: adjustedX, y: adjustedY } = this.getCanvasCoordinates(e);
 
-        const canvas = document.getElementById('arrangeCanvas');
-        const scrollX = canvas.scrollLeft || 0;
-        const scrollY = canvas.scrollTop || 0;
-
-        const adjustedX = canvasX + scrollX - canvas.clientWidth / 2;
-        const adjustedY = canvasY + scrollY - canvas.clientHeight / 2;
+        if (this.state.movingTable) {
+            e.stopPropagation();
+            e.preventDefault();
+            return;
+        }
 
         const clickedTable = this.getTableAtPosition(adjustedX, adjustedY);
 
@@ -235,16 +281,7 @@ class ArrangePage {
 
     handleCanvasMouseMove(e) {
         if (this.state.movingTable) {
-            const rect = document.getElementById('arrangeCanvas').getBoundingClientRect();
-            const canvasX = e.clientX - rect.left;
-            const canvasY = e.clientY - rect.top;
-
-            const canvas = document.getElementById('arrangeCanvas');
-            const scrollX = canvas.scrollLeft || 0;
-            const scrollY = canvas.scrollTop || 0;
-
-            const tableCenterX = canvasX + scrollX - canvas.clientWidth / 2;
-            const tableCenterY = canvasY + scrollY - canvas.clientHeight / 2;
+            const { x: tableCenterX, y: tableCenterY } = this.getCanvasCoordinates(e);
 
             const snappedPos = this.snapToGrid(tableCenterX, tableCenterY);
 
@@ -262,17 +299,7 @@ class ArrangePage {
 
     handleCanvasMouseUp(e) {
         if (e.button === 0 && this.state.movingTable) {
-            const rect = document.getElementById('arrangeCanvas').getBoundingClientRect();
-            const canvasX = e.clientX - rect.left;
-            const canvasY = e.clientY - rect.top;
-
-            const canvas = document.getElementById('arrangeCanvas');
-            const scrollX = canvas.scrollLeft || 0;
-            const scrollY = canvas.scrollTop || 0;
-
-            const adjustedX = canvasX + scrollX - canvas.clientWidth / 2;
-            const adjustedY = canvasY + scrollY - canvas.clientHeight / 2;
-
+            const { x: adjustedX, y: adjustedY } = this.getCanvasCoordinates(e);
             this.placeMovingTable(adjustedX, adjustedY);
         }
     }
@@ -284,6 +311,7 @@ class ArrangePage {
 
     showTableContextMenu(x, y, table) {
         this.hideContextMenu();
+        this.state.menuJustOpened = true;
 
         const contextMenu = document.getElementById('arrangeContextMenu');
         contextMenu.innerHTML = `
@@ -309,6 +337,7 @@ class ArrangePage {
 
     showAddTableContextMenu(x, y, gridX, gridY) {
         this.hideContextMenu();
+        this.state.menuJustOpened = true;
 
         const contextMenu = document.getElementById('arrangeContextMenu');
         contextMenu.innerHTML = `
@@ -590,6 +619,7 @@ class ArrangePage {
         roomContainer.style.height = `${roomHeight}px`;
         roomContainer.style.position = 'relative';
         roomContainer.style.margin = '0 auto';
+        this.roomContainer = roomContainer;
 
         if (this.state.showGrid) {
             this.createGrid(roomContainer, roomWidth, roomHeight);
