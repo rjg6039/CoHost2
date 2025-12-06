@@ -3,6 +3,7 @@ class SettingsPage {
     constructor() {
         this.settings = window.settingsManager.loadSettings();
         this.init();
+        this.syncUserName();
     }
 
     init() {
@@ -73,8 +74,56 @@ class SettingsPage {
         this.settings.showSeatedInWaitlist = !!document.getElementById('showSeatedInWaitlist')?.checked;
         this.settings.autoClearCompleted = !!document.getElementById('autoClearCompleted')?.checked;
 
-        window.settingsManager.saveSettings(this.settings);
-        this.showMessage('Settings saved successfully!', 'success');
+        this.updateRestaurantNameOnServer(this.settings.restaurantName)
+            .catch(() => {})
+            .finally(() => {
+                window.settingsManager.saveSettings(this.settings);
+                this.showMessage('Settings saved successfully!', 'success');
+            });
+    }
+
+    async updateRestaurantNameOnServer(restaurantName) {
+        try {
+            const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+            if (!token) return;
+            await fetch(`${API_BASE}/auth/me`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ restaurantName })
+            });
+            if (typeof setAuthUser === 'function' && typeof getAuthUser === 'function') {
+                const user = getAuthUser() || {};
+                setAuthUser({ ...user, restaurantName });
+            }
+        } catch (err) {
+            console.warn('Failed to update restaurant name on server', err);
+        }
+    }
+
+    async syncUserName() {
+        try {
+            const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+            if (!token) return;
+            const res = await fetch(`${API_BASE}/auth/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) return;
+            const me = await res.json();
+            if (me?.restaurantName) {
+                this.settings.restaurantName = me.restaurantName;
+                window.settingsManager.saveSettings(this.settings);
+                this.populateForm();
+                if (typeof setAuthUser === 'function' && typeof getAuthUser === 'function') {
+                    const user = getAuthUser() || {};
+                    setAuthUser({ ...user, restaurantName: me.restaurantName });
+                }
+            }
+        } catch (err) {
+            console.warn('Failed to sync user name', err);
+        }
     }
 
     resetSettings() {
@@ -193,21 +242,48 @@ class SettingsPage {
 }
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await applyRestaurantNameFromServer();
     // Only initialize on settings page
     if (document.getElementById('settingsForm')) {
         window.settingsPage = new SettingsPage();
     }
 
     const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            if (confirm('Log out of CoHost on this browser?')) {
-                if (typeof clearAuth === 'function') {
-                    clearAuth(); // from config.js: clears token + user
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Log out of CoHost on this browser?')) {
+                    if (typeof clearAuth === 'function') {
+                        clearAuth(); // from config.js: clears token + user
                 }
                 window.location.href = 'login.html';
             }
         });
     }
 });
+
+async function applyRestaurantNameFromServer() {
+    const header = document.getElementById('restaurantName');
+    const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+    let name = (typeof getAuthUser === 'function' && getAuthUser()?.restaurantName) ? getAuthUser().restaurantName : (window.settingsManager?.getRestaurantName?.() || "CoHost Restaurant");
+
+    if (token) {
+        try {
+            const res = await fetch(`${API_BASE}/auth/me`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const me = await res.json();
+                if (me?.restaurantName) {
+                    name = me.restaurantName;
+                    if (typeof setAuthUser === 'function' && typeof getAuthUser === 'function') {
+                        setAuthUser({ ...(getAuthUser() || {}), restaurantName: name });
+                    }
+                }
+            }
+        } catch (_) {}
+    }
+
+    if (header) header.textContent = name;
+    document.title = `Settings - ${name}`;
+}

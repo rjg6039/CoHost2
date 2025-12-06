@@ -97,9 +97,10 @@ class SettingsManager {
     }
 
     applyRestaurantName() {
-        const restaurantNameElements = document.querySelectorAll('#restaurantName');
-        restaurantNameElements.forEach(element => {
-            element.textContent = this.settings.restaurantName;
+        const user = (typeof getAuthUser === 'function') ? getAuthUser() : null;
+        const name = user?.restaurantName || this.settings.restaurantName || "CoHost Restaurant";
+        document.querySelectorAll('#restaurantName').forEach(element => {
+            element.textContent = name;
         });
     }
 

@@ -10,6 +10,7 @@ class HistoryPage {
     init() {
         this.setupEventListeners();
         this.renderHistory();
+        applyRestaurantNameFromServer();
     }
 
     // Load data without affecting hosting page
@@ -318,13 +319,38 @@ class HistoryPage {
 }
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    // Apply settings immediately
-        if (window.settingsManager) {
-            window.settingsManager.applyAllSettings();
-        }
-    // Only initialize on history page
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.settingsManager) {
+        window.settingsManager.applyAllSettings();
+    }
+    await applyRestaurantNameFromServer();
     if (document.getElementById('historyBody')) {
         window.historyPage = new HistoryPage();
     }
 });
+
+async function applyRestaurantNameFromServer() {
+    const header = document.getElementById('restaurantName');
+    const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+    let name = (typeof getAuthUser === 'function' && getAuthUser()?.restaurantName) ? getAuthUser().restaurantName : (window.settingsManager?.getRestaurantName?.() || "CoHost Restaurant");
+
+    if (token) {
+        try {
+            const res = await fetch(`${API_BASE}/auth/me`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const me = await res.json();
+                if (me?.restaurantName) {
+                    name = me.restaurantName;
+                    if (typeof setAuthUser === 'function' && typeof getAuthUser === 'function') {
+                        setAuthUser({ ...(getAuthUser() || {}), restaurantName: name });
+                    }
+                }
+            }
+        } catch (_) {}
+    }
+
+    if (header) header.textContent = name;
+    document.title = `History - ${name}`;
+}

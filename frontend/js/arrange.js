@@ -747,7 +747,7 @@ class ArrangePage {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     if (document.getElementById('arrangeCanvas')) {
         const root = document.documentElement;
         const isDarkMode = root.classList.contains('dark-mode');
@@ -758,6 +758,7 @@ document.addEventListener('DOMContentLoaded', () => {
             root.style.setProperty('--grid-color', 'rgba(0, 0, 0, 0.2)');
         }
 
+        await applyRestaurantNameFromServer();
         window.arrangePage = new ArrangePage();
 
         if (window.settingsManager) {
@@ -765,3 +766,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+async function applyRestaurantNameFromServer() {
+    const header = document.getElementById('restaurantName');
+    const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+    let name = (typeof getAuthUser === 'function' && getAuthUser()?.restaurantName) ? getAuthUser().restaurantName : (window.settingsManager?.getRestaurantName?.() || "CoHost Restaurant");
+
+    if (token) {
+        try {
+            const res = await fetch(`${API_BASE}/auth/me`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const me = await res.json();
+                if (me?.restaurantName) {
+                    name = me.restaurantName;
+                    if (typeof setAuthUser === 'function' && typeof getAuthUser === 'function') {
+                        setAuthUser({ ...(getAuthUser() || {}), restaurantName: name });
+                    }
+                }
+            }
+        } catch (_) {}
+    }
+
+    if (header) header.textContent = name;
+    document.title = `Arrange - ${name}`;
+}
