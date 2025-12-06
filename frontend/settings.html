@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CoHost - Settings</title>
+
+    <!-- Auth / config must come first so other scripts can use it -->
+    <script src="js/config.js"></script>
     <script src="js/darkmode.js"></script>
     <script src="js/settings-manager.js"></script>
+
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/settings.css">
 </head>
@@ -25,27 +29,72 @@
         <a href="settings.html" class="tab active">Settings</a>
     </div>
     <div class="theme-toggle-container">
-        <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">🌙</button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+            🌙
+        </button>
     </div>
 </div>
 
-<!-- Main Content -->
+<!-- Settings Content -->
 <div class="settings-container">
     <div class="settings-header">
-        <h2>Restaurant Settings</h2>
+        <h2>Settings</h2>
+        <!-- New logout button -->
+        <button type="button" class="btn btn-danger" id="logoutBtn">
+            Log out
+        </button>
     </div>
 
     <div class="settings-form-container">
-        <form id="settingsForm" class="settings-form">
+        <form id="settingsForm" class="settings-form" autocomplete="off">
+            <!-- Restaurant Name -->
             <div class="form-group">
-                <label for="restaurantNameInput">Restaurant Name</label>
-                <input type="text" id="restaurantNameInput" class="form-control"
-                       placeholder="Enter restaurant name">
+                <label for="restaurantNameInput">Restaurant name</label>
+                <input
+                        type="text"
+                        id="restaurantNameInput"
+                        class="form-control"
+                        placeholder="CoHost Restaurant"
+                />
+                <div class="form-help">
+                    This name appears in the header on every page.
+                </div>
             </div>
 
+            <!-- Average Dining Time -->
             <div class="form-group">
-                <label for="accentColor">Accent Color</label>
-                <select id="accentColor" class="form-control">
+                <label for="avgDiningTimeInput">Average dining time (minutes)</label>
+                <input
+                        type="number"
+                        id="avgDiningTimeInput"
+                        class="form-control"
+                        min="10"
+                        max="300"
+                        step="5"
+                        placeholder="90"
+                />
+                <div class="form-help">
+                    Used for estimating table turn times and wait estimates.
+                </div>
+            </div>
+
+            <!-- Default Room -->
+            <div class="form-group">
+                <label for="defaultRoomSelect">Default room / floor</label>
+                <select id="defaultRoomSelect" class="form-control">
+                    <option value="main">Main Dining Room</option>
+                    <option value="patio">Patio</option>
+                    <option value="bar">Bar Area</option>
+                </select>
+                <div class="form-help">
+                    The room that loads first on Hosting and Arrange views.
+                </div>
+            </div>
+
+            <!-- Accent Color -->
+            <div class="form-group">
+                <label for="accentColorSelect">Accent color</label>
+                <select id="accentColorSelect" class="form-control">
                     <option value="blue">Blue</option>
                     <option value="green">Green</option>
                     <option value="purple">Purple</option>
@@ -53,38 +102,74 @@
                     <option value="orange">Orange</option>
                     <option value="teal">Teal</option>
                 </select>
-            </div>
-
-            <div class="form-group">
-                <label for="groqApiKey">Groq API Key</label>
-                <input type="password" id="groqApiKey" class="form-control"
-                       placeholder="Enter your Groq API key">
                 <div class="form-help">
-                    This key is used for AI-powered analytics and insights.
-                    <a href="https://console.groq.com" target="_blank">Get your API key</a>
+                    Changes the primary highlight color throughout the app.
                 </div>
             </div>
 
-            <div class="form-actions">
-                <button type="button" class="btn btn-success" id="saveSettingsBtn">Save Settings</button>
-                <button type="button" class="btn" id="resetSettingsBtn">Reset to Defaults</button>
+            <!-- Behavior toggles -->
+            <div class="form-group">
+                <label>Behavior</label>
+                <div class="form-help">
+                    Small tweaks to how CoHost behaves across pages.
+                </div>
+                <div class="form-row" style="margin-top: 10px;">
+                    <div class="form-group">
+                        <label style="font-weight: normal;">
+                            <input type="checkbox" id="showSeatedInWaitlist" />
+                            Show seated parties in the waitlist table
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label style="font-weight: normal;">
+                            <input type="checkbox" id="autoClearCompleted" />
+                            Auto-clear completed parties from History after 24 hours
+                        </label>
+                    </div>
+                </div>
             </div>
+
+            <!-- Form actions -->
+            <div class="form-actions">
+                <button type="button" class="btn btn-success" id="saveSettingsBtn">
+                    Save settings
+                </button>
+                <button type="button" class="btn btn-warning" id="resetSettingsBtn">
+                    Reset to defaults
+                </button>
+            </div>
+
+            <!-- You can add inline messages here if settings.js uses them -->
+            <!-- <div id="settingsMessage" class="form-help"></div> -->
         </form>
     </div>
 
+    <!-- Data export / import section -->
     <div class="settings-section">
-        <h3>Data Management</h3>
+        <h3>Data &amp; backups</h3>
+
         <div class="data-actions">
-            <button type="button" class="btn btn-info" id="exportDataBtn">Export Data</button>
-            <button type="button" class="btn btn-warning" id="importDataBtn">Import Data</button>
-            <button type="button" class="btn btn-danger" id="clearDataBtn">Clear All Data</button>
+            <button type="button" class="btn btn-info" id="exportDataBtn">
+                Export Data
+            </button>
+            <button type="button" class="btn btn-warning" id="importDataBtn">
+                Import Data
+            </button>
+            <button type="button" class="btn btn-danger" id="clearDataBtn">
+                Clear All Data
+            </button>
         </div>
+
         <div class="form-help">
-            Export your waitlist and history data for backup, or import previously exported data.
+            Export your waitlist and history data for backup, or import previously
+            exported data. Clearing data removes local data from this browser only.
         </div>
     </div>
 </div>
 
+<!-- Scripts -->
 <script src="js/data.js"></script>
 <script src="js/settings.js"></script>
 </body>

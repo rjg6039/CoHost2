@@ -207,4 +207,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('settingsForm')) {
         window.settingsPage = new SettingsPage();
     }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Log out of CoHost on this browser?')) {
+                if (typeof clearAuth === 'function') {
+                    clearAuth(); // from config.js: clears token + user
+                }
+                window.location.href = 'login.html';
+            }
+        });
+    }
 });
+
