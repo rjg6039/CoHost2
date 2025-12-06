@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics - CoHost Restaurant</title>
+    <script src="js/config.js"></script>
     <script src="js/darkmode.js"></script>
     <script src="js/settings-manager.js"></script>
     <link rel="stylesheet" href="css/style.css">
@@ -26,7 +27,7 @@
         <a href="settings.html" class="tab">Settings</a>
     </div>
     <div class="theme-toggle-container">
-        <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">🌙</button>
+        <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">dYOT</button>
     </div>
 </div>
 
@@ -50,33 +51,30 @@
         <div class="analytics-card">
             <div class="metric-value" id="totalGuests">0</div>
             <div class="metric-label">Total Guests</div>
-            <div class="metric-trend neutral">0%</div>
         </div>
         <div class="analytics-card">
             <div class="metric-value" id="totalParties">0</div>
             <div class="metric-label">Total Parties</div>
-            <div class="metric-trend neutral">0%</div>
         </div>
         <div class="analytics-card">
             <div class="metric-value" id="avgPartySize">0.0</div>
             <div class="metric-label">Avg Party Size</div>
-            <div class="metric-trend neutral">0%</div>
         </div>
         <div class="analytics-card">
             <div class="metric-value" id="avgWaitTime">0min</div>
             <div class="metric-label">Avg Wait Time</div>
         </div>
         <div class="analytics-card">
-            <div class="metric-value" id="occupancyRate">0%</div>
-            <div class="metric-label">Occupancy Rate</div>
+            <div class="metric-value" id="completedParties">0</div>
+            <div class="metric-label">Completed Parties</div>
         </div>
         <div class="analytics-card">
-            <div class="metric-value" id="avgTurnover">0.0</div>
-            <div class="metric-label">Avg Turnover</div>
+            <div class="metric-value" id="cancelledParties">0</div>
+            <div class="metric-label">Cancelled Parties</div>
         </div>
         <div class="analytics-card">
-            <div class="metric-value" id="totalRevenue">$0</div>
-            <div class="metric-label">Total Revenue</div>
+            <div class="metric-value" id="activeParties">0</div>
+            <div class="metric-label">Active (waiting + seated)</div>
         </div>
         <div class="analytics-card">
             <div class="metric-value" id="peakHour">N/A</div>
@@ -87,7 +85,7 @@
     <!-- Enhanced Charts Section -->
     <div class="charts-grid">
         <div class="chart-card">
-            <h3>Hourly Traffic & Occupancy</h3>
+            <h3>Hourly Traffic</h3>
             <div class="chart-container">
                 <canvas id="hourlyChart"></canvas>
             </div>
@@ -99,13 +97,13 @@
             </div>
         </div>
         <div class="chart-card">
-            <h3>Room Occupancy Distribution</h3>
+            <h3>Room Activity Distribution</h3>
             <div class="chart-container">
                 <canvas id="occupancyChart"></canvas>
             </div>
         </div>
         <div class="chart-card">
-            <h3>Revenue Analytics</h3>
+            <h3>State Breakdown</h3>
             <div class="chart-container">
                 <canvas id="revenueChart"></canvas>
             </div>
@@ -125,38 +123,24 @@
         <div class="insights-header">
             <h3>AI-Powered Business Insights</h3>
             <div class="insights-status" id="insightsStatus">
-                <span class="status-connected">Connected to Groq</span>
+                <span class="status-disconnected">Waiting for data...</span>
             </div>
         </div>
         <div class="insights-content" id="insightsContent">
             <div class="insight-item">
-                <div class="insight-icon">📈</div>
+                <div class="insight-icon">★</div>
                 <div class="insight-text">
-                    <strong>Performance Analysis:</strong> System initializing analytics insights...
-                </div>
-            </div>
-            <div class="insight-item">
-                <div class="insight-icon">🎯</div>
-                <div class="insight-text">
-                    <strong>Optimization Tips:</strong> Loading personalized recommendations...
-                </div>
-            </div>
-            <div class="insight-item">
-                <div class="insight-icon">💡</div>
-                <div class="insight-text">
-                    <strong>Growth Opportunities:</strong> Preparing strategic insights...
+                    Insights will appear here once data loads.
                 </div>
             </div>
         </div>
         <div class="insights-footer">
-            <button class="btn btn-primary" id="refreshInsights">🔄 Refresh Insights</button>
+            <button class="btn btn-primary" id="refreshInsights">⟳ Refresh Insights</button>
             <div class="insights-timestamp">Last updated: <span id="lastUpdated">Loading...</span></div>
         </div>
     </div>
 </div>
 
-<script src="js/data.js"></script>
-<script src="js/analytics-data.js"></script>
 <script src="js/analytics.js"></script>
 </body>
 </html>

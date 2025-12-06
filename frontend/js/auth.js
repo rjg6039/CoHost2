@@ -1,5 +1,5 @@
 
-// Handles login / register for CoHost2 using username + password only
+// Handles login / register for CoHost2 using email + password
 
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("authForm");
@@ -15,18 +15,22 @@ document.addEventListener("DOMContentLoaded", () => {
     function setMode(newMode) {
         mode = newMode;
 
+        const restaurantGroup = document.getElementById("restaurantNameGroup");
+
         if (mode === "login") {
             loginBtn.classList.add("active");
             registerBtn.classList.remove("active");
             authTitle.textContent = "Sign in";
-            authSubtitle.textContent = "Use your CoHost username and password.";
+            authSubtitle.textContent = "Use your CoHost email and password.";
             submitBtn.textContent = "Login";
+            if (restaurantGroup) restaurantGroup.style.display = "none";
         } else {
             registerBtn.classList.add("active");
             loginBtn.classList.remove("active");
             authTitle.textContent = "Create an account";
-            authSubtitle.textContent = "Choose a username and password to get started.";
+            authSubtitle.textContent = "Choose an email, password, and restaurant name to get started.";
             submitBtn.textContent = "Register";
+            if (restaurantGroup) restaurantGroup.style.display = "block";
         }
 
         if (errorEl) {
@@ -51,12 +55,13 @@ document.addEventListener("DOMContentLoaded", () => {
             errorEl.textContent = "";
         }
 
-        const username = (form.username?.value || "").trim();
+        const email = (form.email?.value || "").trim();
         const password = (form.password?.value || "").trim();
+        const restaurantName = (form.restaurantName?.value || "").trim();
 
-        if (!username || !password) {
+        if (!email || !password) {
             if (errorEl) {
-                errorEl.textContent = "Username and password are required.";
+                errorEl.textContent = "Email and password are required.";
                 errorEl.style.display = "block";
             }
             return;
@@ -70,7 +75,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await fetch(`${API_BASE}${endpoint}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({
+                    email,
+                    password,
+                    ...(mode === "register" ? { restaurantName } : {})
+                })
             });
 
             const data = await res.json().catch(() => ({}));

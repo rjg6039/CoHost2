@@ -15,7 +15,7 @@
         <section class="auth-card">
             <h2 class="auth-title" id="authTitle">Sign in</h2>
             <p class="auth-subtitle" id="authSubtitle">
-                Use your CoHost username and password.
+                Use your CoHost email and password.
             </p>
 
             <div class="auth-toggle" aria-label="Authentication mode">
@@ -25,14 +25,26 @@
 
             <form id="authForm" novalidate>
                 <div class="form-group">
-                    <label for="username">Username</label>
+                    <label for="email">Email</label>
                     <input
-                        id="username"
-                        name="username"
+                        id="email"
+                        name="email"
+                        type="email"
+                        class="form-control"
+                        autocomplete="email"
+                        required
+                    />
+                </div>
+
+                <div class="form-group" id="restaurantNameGroup" style="display:none;">
+                    <label for="restaurantName">Restaurant name</label>
+                    <input
+                        id="restaurantName"
+                        name="restaurantName"
                         type="text"
                         class="form-control"
-                        autocomplete="username"
-                        required
+                        autocomplete="organization"
+                        placeholder="CoHost Restaurant"
                     />
                 </div>
 

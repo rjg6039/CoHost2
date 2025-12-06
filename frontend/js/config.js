@@ -5,7 +5,7 @@
 // before this script loads if you ever need to.
 const API_BASE = (typeof window !== "undefined" && window.COHOST_API_BASE)
     ? window.COHOST_API_BASE
-    : "https://cohost2-backend.onrender.com/api";
+    : "http://localhost:3000/api";
 
 // Storage keys
 const TOKEN_KEY = "cohost2_token";

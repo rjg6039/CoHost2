@@ -45,9 +45,6 @@ class SettingsManager {
             getRestaurantName: () => {
                 return window.settingsManager.currentSettings?.restaurantName || "CoHost Restaurant";
             },
-            getGroqApiKey: () => {
-                return window.settingsManager.currentSettings?.groqApiKey || "";
-            },
             getAccentColor: () => {
                 return window.settingsManager.currentSettings?.accentColor || "blue";
             }
@@ -64,7 +61,10 @@ class SettingsManager {
         return {
             restaurantName: "CoHost Restaurant",
             accentColor: "blue",
-            groqApiKey: ""
+            avgDiningTime: 90,
+            defaultRoom: "main",
+            showSeatedInWaitlist: false,
+            autoClearCompleted: false
         };
     }
 
@@ -157,10 +157,6 @@ class SettingsManager {
     // Public API methods
     getRestaurantName() {
         return this.settings.restaurantName;
-    }
-
-    getGroqApiKey() {
-        return this.settings.groqApiKey;
     }
 
     getAccentColor() {

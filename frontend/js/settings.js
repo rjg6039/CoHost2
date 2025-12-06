@@ -35,32 +35,46 @@ class SettingsPage {
         });
 
         // Real-time updates for better UX
-        document.getElementById('restaurantNameInput').addEventListener('input', (e) => {
-            this.settings.restaurantName = e.target.value;
-            window.settingsManager.saveSettings(this.settings);
-        });
+        const nameInput = document.getElementById('restaurantNameInput');
+        if (nameInput) {
+            nameInput.addEventListener('input', (e) => {
+                this.settings.restaurantName = e.target.value;
+                window.settingsManager.saveSettings(this.settings);
+            });
+        }
 
-        document.getElementById('accentColor').addEventListener('change', (e) => {
-            this.settings.accentColor = e.target.value;
-            window.settingsManager.saveSettings(this.settings);
-        });
-
-        document.getElementById('groqApiKey').addEventListener('input', (e) => {
-            this.settings.groqApiKey = e.target.value;
-            // Don't save on every keystroke for API key for security
-        });
+        const accentSelect = document.getElementById('accentColorSelect');
+        if (accentSelect) {
+            accentSelect.addEventListener('change', (e) => {
+                this.settings.accentColor = e.target.value;
+                window.settingsManager.saveSettings(this.settings);
+            });
+        }
     }
 
     populateForm() {
-        document.getElementById('restaurantNameInput').value = this.settings.restaurantName;
-        document.getElementById('accentColor').value = this.settings.accentColor;
-        document.getElementById('groqApiKey').value = this.settings.groqApiKey;
+        const nameInput = document.getElementById('restaurantNameInput');
+        const accentSelect = document.getElementById('accentColorSelect');
+        const avgDining = document.getElementById('avgDiningTimeInput');
+        const defaultRoom = document.getElementById('defaultRoomSelect');
+        const showSeated = document.getElementById('showSeatedInWaitlist');
+        const autoClear = document.getElementById('autoClearCompleted');
+
+        if (nameInput) nameInput.value = this.settings.restaurantName || '';
+        if (accentSelect) accentSelect.value = this.settings.accentColor || 'blue';
+        if (avgDining) avgDining.value = this.settings.avgDiningTime || 90;
+        if (defaultRoom) defaultRoom.value = this.settings.defaultRoom || 'main';
+        if (showSeated) showSeated.checked = !!this.settings.showSeatedInWaitlist;
+        if (autoClear) autoClear.checked = !!this.settings.autoClearCompleted;
     }
 
     saveSettingsFromForm() {
-        this.settings.restaurantName = document.getElementById('restaurantNameInput').value;
-        this.settings.accentColor = document.getElementById('accentColor').value;
-        this.settings.groqApiKey = document.getElementById('groqApiKey').value;
+        this.settings.restaurantName = document.getElementById('restaurantNameInput')?.value || "CoHost Restaurant";
+        this.settings.accentColor = document.getElementById('accentColorSelect')?.value || "blue";
+        this.settings.avgDiningTime = parseInt(document.getElementById('avgDiningTimeInput')?.value || "90", 10);
+        this.settings.defaultRoom = document.getElementById('defaultRoomSelect')?.value || "main";
+        this.settings.showSeatedInWaitlist = !!document.getElementById('showSeatedInWaitlist')?.checked;
+        this.settings.autoClearCompleted = !!document.getElementById('autoClearCompleted')?.checked;
 
         window.settingsManager.saveSettings(this.settings);
         this.showMessage('Settings saved successfully!', 'success');
@@ -71,7 +85,10 @@ class SettingsPage {
             this.settings = {
                 restaurantName: "CoHost Restaurant",
                 accentColor: "blue",
-                groqApiKey: ""
+                avgDiningTime: 90,
+                defaultRoom: "main",
+                showSeatedInWaitlist: false,
+                autoClearCompleted: false
             };
 
             window.settingsManager.saveSettings(this.settings);
@@ -220,4 +237,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
