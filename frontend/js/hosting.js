@@ -8,6 +8,7 @@ class HostingPage {
         this.roomOrigin = { x: 0, y: 0 };
         this.isPanning = false;
         this.panStart = { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 };
+        this.waitlist = [];
 
         this.filters = {
             handicap: false,
@@ -22,6 +23,7 @@ class HostingPage {
         this.setupEventListeners();
         this.renderPage();
         this.setupTableViewPan();
+        this.refreshWaitlist();
     }
 
     setupEventListeners() {
@@ -205,12 +207,12 @@ class HostingPage {
 
     renderTables() {
         const tableView = document.getElementById('tableView');
-        const room = this.data.rooms[this.currentRoom];
+        const room = this.data.rooms[this.currentRoom] || { tables: [] };
 
         tableView.innerHTML = '';
 
         // Filter tables based on active filters
-        const filteredTables = this.filterTables(room.tables);
+        const filteredTables = this.filterTables(room.tables || []);
 
         let minX = 0, minY = 0, maxX = 0, maxY = 0;
         if (filteredTables.length) {
