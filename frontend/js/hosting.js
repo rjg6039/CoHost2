@@ -9,6 +9,12 @@ class HostingPage {
         this.isPanning = false;
         this.panStart = { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 };
         this.waitlist = [];
+        this.TABLE_SIZES = {
+            square: { width: 80, height: 80 },
+            circle: { width: 80, height: 80 },
+            vertical: { width: 40, height: 120 },
+            horizontal: { width: 120, height: 40 }
+        };
 
         this.filters = {
             handicap: false,
@@ -357,10 +363,15 @@ class HostingPage {
 
     createTableElement(table) {
         const tableEl = document.createElement('div');
-        tableEl.className = `table-item ${table.state}`;
+        const shape = table.shape || 'square';
+        const size = this.TABLE_SIZES[shape] || this.TABLE_SIZES.square;
+        tableEl.className = `table-item ${table.state} ${shape}`;
         const origin = this.roomOrigin || { x: 0, y: 0 };
         tableEl.style.left = `calc(50% + ${table.x - origin.x}px)`;
         tableEl.style.top = `calc(50% + ${table.y - origin.y}px)`;
+        tableEl.style.width = `${size.width}px`;
+        tableEl.style.height = `${size.height}px`;
+        tableEl.style.transform = 'translate(-50%, -50%)';
         tableEl.dataset.tableId = table.id;
 
         // Add a subtle visual indication when filters are active and table matches

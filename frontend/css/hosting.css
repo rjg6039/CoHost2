@@ -100,8 +100,6 @@
 /* Table border styles that adapt to dark/light mode */
 .table-item {
     position: absolute;
-    width: 70px;
-    height: 70px;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
@@ -114,6 +112,11 @@
     color: white;
     font-weight: bold;
 }
+
+.table-item.square { width: 80px; height: 80px; }
+.table-item.circle { width: 80px; height: 80px; border-radius: 50%; }
+.table-item.vertical { width: 40px; height: 120px; }
+.table-item.horizontal { width: 120px; height: 40px; }
 
 /* Define border colors in light mode */
 :root {
