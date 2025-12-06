@@ -31,12 +31,23 @@ app.use("/api/auth", authRoutes);
 app.use("/api/waitlist", waitlistRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
-// Serve frontend from ../frontend
+// Serve frontend from ../frontend with proper MIME types
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendPath = path.join(__dirname, "..", "frontend");
 
-app.use(express.static(frontendPath));
+// Custom static file serving with correct MIME types
+app.use(express.static(frontendPath, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (filePath.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html');
+    }
+  }
+}));
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
