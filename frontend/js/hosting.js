@@ -186,31 +186,43 @@ class HostingPage {
                 headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
             });
             const data = await res.json();
-            if (res.ok && data.rooms) {
-                const roomRes = await fetch(`${API_BASE}/rooms`, {
-                    headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
-                });
-                const roomPayload = await roomRes.json().catch(() => ({}));
-                if (roomRes.ok && roomPayload.rooms) {
-                    this.data.rooms = {};
-                    roomPayload.rooms.forEach(r => {
-                        this.data.rooms[r.key] = { ...r, name: r.name, tables: r.tables || [] };
-                    });
-                    this.currentRoom = this.data.rooms[this.currentRoom] ? this.currentRoom : roomPayload.rooms[0].key;
-                } else {
-                    this.data.rooms = {};
-                    data.rooms.forEach(r => this.data.rooms[r] = { name: r, tables: [] });
-                    this.currentRoom = data.rooms[0];
-                }
+            if (!res.ok || !data.rooms) {
+                this.data.rooms = { main: { name: 'Main', tables: [] } };
+                this.currentRoom = 'main';
+                this.setRoomOptions(['main']);
                 this.renderRoomMetrics();
                 this.renderTables();
-                const keys = Object.keys(this.data.rooms);
-                const options = keys.length ? keys : ['main'];
-                this.setRoomOptions(options);
+                return;
             }
+
+            const roomRes = await fetch(`${API_BASE}/rooms`, {
+                headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
+            });
+            const roomPayload = await roomRes.json().catch(() => ({}));
+
+            this.data.rooms = {};
+            if (roomRes.ok && Array.isArray(roomPayload.rooms) && roomPayload.rooms.length) {
+                roomPayload.rooms.forEach(r => {
+                    this.data.rooms[r.key] = { ...r, name: r.name, tables: r.tables || [] };
+                });
+                this.currentRoom = this.data.rooms[this.currentRoom] ? this.currentRoom : roomPayload.rooms[0].key;
+            } else {
+                // fallback to keys returned by waitlist/rooms
+                data.rooms.forEach(r => this.data.rooms[r] = { name: r, tables: [] });
+                this.currentRoom = data.rooms.includes(this.currentRoom) ? this.currentRoom : data.rooms[0];
+            }
+
+            const keys = Object.keys(this.data.rooms);
+            this.setRoomOptions(keys.length ? keys : ['main']);
+            this.renderRoomMetrics();
+            this.renderTables();
         } catch (err) {
             console.warn("Unable to refresh rooms", err);
+            this.data.rooms = { main: { name: 'Main', tables: [] } };
+            this.currentRoom = 'main';
             this.setRoomOptions(['main']);
+            this.renderRoomMetrics();
+            this.renderTables();
         }
     }
 
@@ -235,24 +247,20 @@ class HostingPage {
         const metricsContainer = document.getElementById('roomMetricsContainer');
 
         if (!this.data.rooms || !Object.keys(this.data.rooms).length) {
-            metricsContainer.innerHTML = '<div class="room-pin">No rooms yet</div>';
+            metricsContainer.innerHTML = '';
             return;
         }
 
         let metricsHTML = '';
-        let roomCount = 0;
 
-        // Create a pin for each room
         Object.entries(this.data.rooms).forEach(([roomKey, room]) => {
             const availableTables = room.tables.filter(t => t.state === 'ready').length;
             const seatedTables = room.tables.filter(t => t.state === 'seated').length;
             const notReadyTables = room.tables.filter(t => t.state === 'not-ready').length;
             const totalTables = room.tables.length;
 
-            // Calculate occupancy percentage
             const occupancyRate = totalTables > 0 ? Math.round((seatedTables / totalTables) * 100) : 0;
 
-            // Determine status color based on occupancy
             let statusClass = 'metric-available';
             if (occupancyRate >= 90) statusClass = 'metric-full';
             else if (occupancyRate >= 70) statusClass = 'metric-busy';
@@ -283,20 +291,19 @@ class HostingPage {
                     </div>
                 </div>
             `;
-            roomCount++;
         });
 
         metricsContainer.innerHTML = metricsHTML;
 
-        // Add click event to room pins for switching rooms
         metricsContainer.querySelectorAll('.room-pin').forEach(pin => {
             pin.addEventListener('click', () => {
                 const roomKey = pin.getAttribute('data-room');
                 if (roomKey !== this.currentRoom) {
                     this.currentRoom = roomKey;
-                    document.getElementById('roomSelect').value = roomKey;
+                    const select = document.getElementById('roomSelect');
+                    if (select) select.value = roomKey;
                     this.renderTables();
-                    this.renderRoomMetrics(); // Re-render to update active state
+                    this.renderRoomMetrics();
                 }
             });
         });
