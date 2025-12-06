@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>CoHost • Arrange</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .arrange-layout {
+          display: grid;
+          grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+          gap: 12px;
+        }
+        .arrange-column-title {
+          font-size: 14px;
+          font-weight: 600;
+          margin-bottom: 4px;
+        }
+        .arrange-column-subtitle {
+          font-size: 12px;
+          color: #8e8e93;
+          margin-bottom: 8px;
+        }
+        .arrange-list {
+          max-height: 420px;
+          overflow-y: auto;
+        }
+        .arrange-card {
+          border-radius: 12px;
+          padding: 8px 9px;
+          border: 0.5px solid rgba(0, 0, 0, 0.08);
+          background: rgba(255, 255, 255, 0.96);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+          margin-bottom: 8px;
+          font-size: 13px;
+        }
+        .arrange-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2px;
+        }
+        .arrange-name {
+          font-weight: 500;
+        }
+        .arrange-meta {
+          font-size: 12px;
+          color: #8e8e93;
+        }
+        .arrange-actions {
+          margin-top: 6px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+        }
+        .arrange-button {
+          border-radius: 999px;
+          border: none;
+          padding: 4px 8px;
+          font-size: 11px;
+          cursor: pointer;
+          background: #f2f2f7;
+        }
+        .arrange-button-primary {
+          background: var(--accent);
+          color: #fff;
+        }
+        .arrange-button-danger {
+          background: #ff3b30;
+          color: #fff;
+        }
+    </style>
+</head>
+<body class="app-body">
+<header class="app-header">
+    <div class="app-title">CoHost</div>
+    <nav class="app-nav">
+        <a href="index.html" class="nav-link">Waitlist</a>
+        <a href="analytics.html" class="nav-link">Analytics</a>
+        <a href="history.html" class="nav-link">History</a>
+        <a href="arrange.html" class="nav-link nav-link-active">Arrange</a>
+        <a href="settings.html" class="nav-link">Settings</a>
+        <button id="logoutBtn" class="nav-link nav-button">Logout</button>
+    </nav>
+</header>
+
+<main class="app-main">
+    <section class="panel">
+        <h2>Arrange & seating</h2>
+
+        <div class="arrange-layout">
+            <div>
+                <div class="arrange-column-title">Waiting</div>
+                <div class="arrange-column-subtitle">Guests not yet seated.</div>
+                <div id="waitingList" class="arrange-list"></div>
+            </div>
+
+            <div>
+                <div class="arrange-column-title">Seated</div>
+                <div class="arrange-column-subtitle">Guests currently at tables.</div>
+                <div id="seatedList" class="arrange-list"></div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/arrange.js"></script>
+</body>
+</html>

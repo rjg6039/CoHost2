@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>CoHost • History</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .history-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+        }
+        .history-header h2 {
+          margin: 0;
+          font-size: 18px;
+        }
+        .history-header p {
+          margin: 2px 0 0;
+          font-size: 12px;
+          color: #8e8e93;
+        }
+        .history-controls select {
+          border-radius: 999px;
+          border: 1px solid rgba(0, 0, 0, 0.12);
+          padding: 4px 10px;
+          background: #f2f2f7;
+          font-size: 12px;
+        }
+        .history-list {
+          margin-top: 10px;
+        }
+        .history-row {
+          padding: 8px 0;
+          border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
+        }
+        .history-row:last-child {
+          border-bottom: none;
+        }
+        .history-title {
+          font-size: 14px;
+          font-weight: 500;
+        }
+        .history-meta {
+          font-size: 12px;
+          color: #8e8e93;
+        }
+        .history-tags {
+          margin-top: 3px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+        }
+        .tag {
+          font-size: 10px;
+          padding: 2px 6px;
+          border-radius: 999px;
+          background: #f2f2f7;
+          color: #555;
+        }
+        .tag-cancelled {
+          background: rgba(255, 59, 48, 0.12);
+          color: #ff3b30;
+        }
+    </style>
+</head>
+<body class="app-body">
+<header class="app-header">
+    <div class="app-title">CoHost</div>
+    <nav class="app-nav">
+        <a href="index.html" class="nav-link">Waitlist</a>
+        <a href="analytics.html" class="nav-link">Analytics</a>
+        <a href="history.html" class="nav-link nav-link-active">History</a>
+        <a href="arrange.html" class="nav-link">Arrange</a>
+        <a href="settings.html" class="nav-link">Settings</a>
+        <button id="logoutBtn" class="nav-link nav-button">Logout</button>
+    </nav>
+</header>
+
+<main class="app-main">
+    <section class="panel">
+        <div class="history-header">
+            <div>
+                <h2>Guest history</h2>
+                <p id="historySubtitle">Last 30 days • Completed & cancelled</p>
+            </div>
+            <div class="history-controls">
+                <select id="historyRangeSelect">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="historyContainer" class="history-list"></div>
+    </section>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/history.js"></script>
+</body>
+</html>

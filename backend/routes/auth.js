@@ -1,3 +1,4 @@
+// backend/routes/auth.js
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -97,6 +98,37 @@ router.get("/me", async (req, res) => {
     });
   } catch (err) {
     res.status(401).json({ error: "Invalid token" });
+  }
+});
+
+// PATCH /api/auth/me  (update restaurantName)
+router.patch("/me", async (req, res) => {
+  try {
+    const header = req.headers.authorization || "";
+    const [scheme, token] = header.split(" ");
+    if (scheme !== "Bearer" || !token) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const { restaurantName } = req.body;
+
+    const user = await User.findById(payload.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (restaurantName && typeof restaurantName === "string") {
+      user.restaurantName = restaurantName.trim() || user.restaurantName;
+      await user.save();
+    }
+
+    res.json({
+      id: user._id,
+      email: user.email,
+      restaurantName: user.restaurantName
+    });
+  } catch (err) {
+    console.error("Update /me error:", err);
+    res.status(401).json({ error: "Invalid or expired token" });
   }
 });
 
