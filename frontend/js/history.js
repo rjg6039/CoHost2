@@ -320,10 +320,10 @@ class HistoryPage {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
+    await applyRestaurantNameFromServer();
     if (window.settingsManager) {
         window.settingsManager.applyAllSettings();
     }
-    await applyRestaurantNameFromServer();
     if (document.getElementById('historyBody')) {
         window.historyPage = new HistoryPage();
     }

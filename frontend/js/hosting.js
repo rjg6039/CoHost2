@@ -1146,11 +1146,10 @@ class HostingPage {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
-    // Apply settings immediately
+    await applyRestaurantNameFromServer();
     if (window.settingsManager) {
         window.settingsManager.applyAllSettings();
     }
-    await applyRestaurantNameFromServer();
     window.hostingPage = new HostingPage();
     // Setup drag and drop after initial render
     setTimeout(() => {
