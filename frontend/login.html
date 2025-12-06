@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CoHost • Login</title>
-    <link rel="stylesheet" href="css/style.css">
     <style>
         .login-container {
             min-height: 100vh;
@@ -36,20 +35,8 @@
             margin-bottom: 8px;
         }
 
-        .login-subtitle {
-            color: #666;
-            font-size: 16px;
-        }
-
         .form-group {
             margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
         }
 
         .form-input {
@@ -58,7 +45,6 @@
             border: 2px solid #e1e5e9;
             border-radius: 8px;
             font-size: 16px;
-            transition: border-color 0.2s;
         }
 
         .form-input:focus {
@@ -76,29 +62,7 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
             margin-bottom: 15px;
-        }
-
-        .btn-login:hover {
-            background: #5a6fd8;
-        }
-
-        .btn-register {
-            width: 100%;
-            padding: 14px;
-            background: #f8f9fa;
-            color: #333;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-register:hover {
-            background: #e9ecef;
         }
 
         .error-message {
@@ -115,48 +79,132 @@
     <div class="login-card">
         <div class="login-header">
             <h1 class="login-title">CoHost</h1>
-            <p class="login-subtitle">Sign in to manage your restaurant</p>
+            <p>Sign in to manage your restaurant</p>
         </div>
 
         <div class="form-group">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" id="email" class="form-input" placeholder="Enter your email" required>
+            <input type="email" id="email" class="form-input" placeholder="Email" required>
         </div>
 
         <div class="form-group">
-            <label for="password" class="form-label">Password</label>
-            <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+            <input type="password" id="password" class="form-input" placeholder="Password" required>
         </div>
 
         <button id="loginBtn" class="btn-login">Sign In</button>
-        <button id="registerBtn" class="btn-register">Create Account</button>
+        <button id="registerBtn" class="btn-secondary">Create Account</button>
 
         <div id="error" class="error-message"></div>
     </div>
 </div>
 
-<!-- Load JavaScript files in correct order -->
+<!-- ALL JAVASCRIPT IN ONE FILE TO AVOID DEPENDENCY ISSUES -->
 <script>
-    console.log('=== DEBUG: Script Loading Check ===');
-    console.log('Current URL:', window.location.href);
-    console.log('Script paths should be relative to:', window.location.origin);
+    // Configuration - define everything in one place
+    const API_BASE_URL = window.location.origin.includes('localhost')
+        ? 'http://localhost:3000/api'
+        : `${window.location.origin}/api`;
 
-    // Test if config.js loads
-    console.log('Testing config.js load...');
-</script>
+    console.log('API Base URL:', API_BASE_URL);
 
-<!-- Load scripts with error handling -->
-<script src="js/config.js" onerror="console.error('Failed to load config.js')"></script>
-<script>
-    console.log('After config.js load - apiRequest exists:', typeof apiRequest);
-    console.log('API_BASE_URL:', typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'undefined');
-</script>
+    // Simple API request function
+    async function apiRequest(path, options = {}) {
+        const token = localStorage.getItem('cohost-token');
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
+            ...options.headers
+        };
 
-<script src="js/auth.js" onerror="console.error('Failed to load auth.js')"></script>
-<script>
-    console.log('All scripts loaded');
+        try {
+            console.log('Making API request to:', `${API_BASE_URL}${path}`);
+            const response = await fetch(`${API_BASE_URL}${path}`, {
+                ...options,
+                headers
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || `HTTP ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('API Request failed:', error);
+            throw error;
+        }
+    }
+
+    // Authentication functions
+    function setAuthToken(token) {
+        localStorage.setItem('cohost-token', token);
+    }
+
+    function setCurrentUser(user) {
+        localStorage.setItem('cohost-user', JSON.stringify(user));
+    }
+
+    // Login functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorBox = document.getElementById('error');
+
+        console.log('Login page loaded');
+
+        async function handleLogin() {
+            errorBox.textContent = '';
+            try {
+                console.log('Attempting login...');
+                const data = await apiRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: emailInput.value,
+                        password: passwordInput.value
+                    })
+                });
+
+                console.log('Login successful:', data);
+                setAuthToken(data.token);
+                setCurrentUser(data.user);
+                window.location.href = 'index.html';
+            } catch (err) {
+                console.error('Login error:', err);
+                errorBox.textContent = err.message || 'Login failed. Please try again.';
+            }
+        }
+
+        async function handleRegister() {
+            errorBox.textContent = '';
+            try {
+                console.log('Attempting registration...');
+                const data = await apiRequest('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: emailInput.value,
+                        password: passwordInput.value
+                    })
+                });
+
+                console.log('Registration successful:', data);
+                setAuthToken(data.token);
+                setCurrentUser(data.user);
+                window.location.href = 'index.html';
+            } catch (err) {
+                console.error('Registration error:', err);
+                errorBox.textContent = err.message || 'Registration failed. Please try again.';
+            }
+        }
+
+        // Event listeners
+        loginBtn.addEventListener('click', handleLogin);
+        registerBtn.addEventListener('click', handleRegister);
+
+        passwordInput.addEventListener('keyup', e => {
+            if (e.key === 'Enter') handleLogin();
+        });
+    });
 </script>
-<script src="js/config.js"></script>
-<script src="js/auth.js"></script>
 </body>
 </html>
