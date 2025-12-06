@@ -1,11 +1,13 @@
 
 // Basic frontend configuration for CoHost2
 
-// Backend API base. You can override this with window.COHOST_API_BASE
-// before this script loads if you ever need to.
+// Backend API base. Override with window.COHOST_API_BASE before this script loads.
+// Defaults to the Render backend in production, falls back to localhost for dev.
 const API_BASE = (typeof window !== "undefined" && window.COHOST_API_BASE)
     ? window.COHOST_API_BASE
-    : "http://localhost:3000/api";
+    : (typeof window !== "undefined" && /onrender\.com$/.test(window.location.hostname))
+        ? "https://cohost2-backend.onrender.com/api"
+        : "http://localhost:3000/api";
 
 // Storage keys
 const TOKEN_KEY = "cohost2_token";

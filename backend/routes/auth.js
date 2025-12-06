@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import Party from "../models/Party.js";
 
 const router = express.Router();
 
@@ -25,6 +26,63 @@ router.post("/register", async (req, res) => {
       passwordHash,
       restaurantName: restaurantName || "CoHost Restaurant"
     });
+
+    // Seed demo parties for new accounts so analytics and history have data
+    try {
+      const now = Date.now();
+      const sampleParties = [
+        {
+          user: user._id,
+          name: "Johnson Family",
+          size: 4,
+          room: "main",
+          state: "completed",
+          addedAt: new Date(now - 3 * 60 * 60 * 1000),
+          seatedAt: new Date(now - 2.5 * 60 * 60 * 1000),
+          completedAt: new Date(now - 2 * 60 * 60 * 1000)
+        },
+        {
+          user: user._id,
+          name: "Smith Group",
+          size: 6,
+          room: "patio",
+          state: "cancelled",
+          addedAt: new Date(now - 90 * 60 * 1000),
+          cancelledAt: new Date(now - 60 * 60 * 1000),
+          cancelReason: "No-show"
+        },
+        {
+          user: user._id,
+          name: "Lee Party",
+          size: 2,
+          room: "bar",
+          state: "waiting",
+          addedAt: new Date(now - 15 * 60 * 1000)
+        },
+        {
+          user: user._id,
+          name: "Garcia Reunion",
+          size: 5,
+          room: "main",
+          state: "seated",
+          addedAt: new Date(now - 50 * 60 * 1000),
+          seatedAt: new Date(now - 30 * 60 * 1000)
+        },
+        {
+          user: user._id,
+          name: "Patel Duo",
+          size: 2,
+          room: "bar",
+          state: "completed",
+          addedAt: new Date(now - 26 * 60 * 60 * 1000),
+          seatedAt: new Date(now - 25.5 * 60 * 60 * 1000),
+          completedAt: new Date(now - 25 * 60 * 60 * 1000)
+        }
+      ];
+      await Party.insertMany(sampleParties);
+    } catch (seedErr) {
+      console.warn("Failed to seed sample parties for new user", seedErr);
+    }
 
     const token = jwt.sign(
       { userId: user._id },
