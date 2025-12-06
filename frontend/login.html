@@ -1,210 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoHost • Login</title>
-    <style>
-        .login-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-        }
+  <meta charset="UTF-8" />
+  <title>CoHost • Sign in</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        .login-card {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
+  <script src="js/config.js" defer></script>
+  <script src="js/darkmode.js" defer></script>
+  <script src="js/settings-manager.js" defer></script>
+  <script src="js/auth.js" defer></script>
 
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .login-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 14px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 15px;
-        }
-
-        .error-message {
-            color: #e74c3c;
-            font-size: 14px;
-            text-align: center;
-            margin-top: 15px;
-            min-height: 20px;
-        }
-    </style>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/settings.css" />
 </head>
-<body>
-<div class="login-container">
-    <div class="login-card">
-        <div class="login-header">
-            <h1 class="login-title">CoHost</h1>
-            <p>Sign in to manage your restaurant</p>
-        </div>
-
-        <div class="form-group">
-            <input type="email" id="email" class="form-input" placeholder="Email" required>
-        </div>
-
-        <div class="form-group">
-            <input type="password" id="password" class="form-input" placeholder="Password" required>
-        </div>
-
-        <button id="loginBtn" class="btn-login">Sign In</button>
-        <button id="registerBtn" class="btn-secondary">Create Account</button>
-
-        <div id="error" class="error-message"></div>
-    </div>
+<body class="auth-page">
+<div class="app-header">
+  <h1>CoHost</h1>
 </div>
 
-<!-- ALL JAVASCRIPT IN ONE FILE TO AVOID DEPENDENCY ISSUES -->
-<script>
-    // Configuration - define everything in one place
-    const API_BASE_URL = window.location.origin.includes('localhost')
-        ? 'http://localhost:3000/api'
-        : `${window.location.origin}/api`;
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-mode="login">Sign in</button>
+      <button class="auth-tab" data-mode="register">Create account</button>
+    </div>
 
-    console.log('API Base URL:', API_BASE_URL);
+    <form id="authForm" novalidate>
+      <label class="field">
+        <span>Email</span>
+        <input type="email" id="email" autocomplete="email" required />
+      </label>
 
-    // Simple API request function
-    async function apiRequest(path, options = {}) {
-        const token = localStorage.getItem('cohost-token');
-        const headers = {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
-            ...options.headers
-        };
+      <label class="field">
+        <span>Password</span>
+        <input type="password" id="password" autocomplete="current-password" required />
+      </label>
 
-        try {
-            console.log('Making API request to:', `${API_BASE_URL}${path}`);
-            const response = await fetch(`${API_BASE_URL}${path}`, {
-                ...options,
-                headers
-            });
+      <label class="field hidden" id="restaurantRow">
+        <span>Restaurant name</span>
+        <input type="text" id="restaurantName" placeholder="My Bistro" />
+      </label>
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || `HTTP ${response.status}`);
-            }
+      <p id="authError" class="error-text"></p>
 
-            return await response.json();
-        } catch (error) {
-            console.error('API Request failed:', error);
-            throw error;
-        }
-    }
-
-    // Authentication functions
-    function setAuthToken(token) {
-        localStorage.setItem('cohost-token', token);
-    }
-
-    function setCurrentUser(user) {
-        localStorage.setItem('cohost-user', JSON.stringify(user));
-    }
-
-    // Login functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const loginBtn = document.getElementById('loginBtn');
-        const registerBtn = document.getElementById('registerBtn');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const errorBox = document.getElementById('error');
-
-        console.log('Login page loaded');
-
-        async function handleLogin() {
-            errorBox.textContent = '';
-            try {
-                console.log('Attempting login...');
-                const data = await apiRequest('/auth/login', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        email: emailInput.value,
-                        password: passwordInput.value
-                    })
-                });
-
-                console.log('Login successful:', data);
-                setAuthToken(data.token);
-                setCurrentUser(data.user);
-                window.location.href = 'index.html';
-            } catch (err) {
-                console.error('Login error:', err);
-                errorBox.textContent = err.message || 'Login failed. Please try again.';
-            }
-        }
-
-        async function handleRegister() {
-            errorBox.textContent = '';
-            try {
-                console.log('Attempting registration...');
-                const data = await apiRequest('/auth/register', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        email: emailInput.value,
-                        password: passwordInput.value
-                    })
-                });
-
-                console.log('Registration successful:', data);
-                setAuthToken(data.token);
-                setCurrentUser(data.user);
-                window.location.href = 'index.html';
-            } catch (err) {
-                console.error('Registration error:', err);
-                errorBox.textContent = err.message || 'Registration failed. Please try again.';
-            }
-        }
-
-        // Event listeners
-        loginBtn.addEventListener('click', handleLogin);
-        registerBtn.addEventListener('click', handleRegister);
-
-        passwordInput.addEventListener('keyup', e => {
-            if (e.key === 'Enter') handleLogin();
-        });
-    });
-</script>
+      <div class="button-row">
+        <button type="submit" id="loginBtn" class="primary-btn">Sign in</button>
+        <button type="submit" id="registerBtn" class="primary-btn hidden">Create account</button>
+      </div>
+    </form>
+  </div>
+</div>
 </body>
 </html>

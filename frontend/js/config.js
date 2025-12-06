@@ -1,71 +1,94 @@
-// Configuration for API endpoints
-const API_BASE_URL = window.location.origin.includes('localhost')
-    ? 'http://localhost:3000/api'
-    : `${window.location.origin}/api`;
+// frontend/js/config.js
 
-// Authentication helpers
+// UPDATE THIS to your actual backend Render URL
+// Example: const PRODUCTION_API_BASE = 'https://cohost2-backend.onrender.com/api';
+const PRODUCTION_API_BASE = 'https://cohost2-backend.onrender.com/'; // <-- change this
+
+// Local dev vs production
+const API_BASE_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:3000/api'
+  : PRODUCTION_API_BASE;
+
+// ===== Auth token helpers =====
 function getAuthToken() {
-    return localStorage.getItem('cohost-token');
+  return localStorage.getItem('cohost-token');
 }
 
 function setAuthToken(token) {
-    localStorage.setItem('cohost-token', token);
+  localStorage.setItem('cohost-token', token);
+}
+
+function clearAuthToken() {
+  localStorage.removeItem('cohost-token');
 }
 
 function getCurrentUser() {
-    const user = localStorage.getItem('cohost-user');
-    return user ? JSON.parse(user) : null;
+  const raw = localStorage.getItem('cohost-user');
+  return raw ? JSON.parse(raw) : null;
 }
 
 function setCurrentUser(user) {
-    localStorage.setItem('cohost-user', JSON.stringify(user));
+  localStorage.setItem('cohost-user', JSON.stringify(user));
 }
 
 function logout() {
-    localStorage.removeItem('cohost-token');
-    localStorage.removeItem('cohost-user');
-    window.location.href = 'login.html';
+  clearAuthToken();
+  localStorage.removeItem('cohost-user');
+  window.location.href = 'login.html';
 }
 
-// Enhanced API request function
+// ===== Core API helper =====
 async function apiRequest(path, options = {}) {
-    const token = getAuthToken();
-    const headers = {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-        ...options.headers
-    };
+  const token = getAuthToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {})
+  };
 
-    try {
-        const response = await fetch(`${API_BASE_URL}${path}`, {
-            ...options,
-            headers
-        });
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-        }
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers
+  });
 
-        return await response.json();
-    } catch (error) {
-        console.error('API Request failed:', error);
-        throw error;
-    }
+  let data = null;
+  try {
+    data = await res.json();
+  } catch (_) {
+    // ignore
+  }
+
+  if (!res.ok) {
+    const msg = (data && data.error) || `HTTP ${res.status}: ${res.statusText}`;
+    throw new Error(msg);
+  }
+
+  return data;
 }
 
-// Redirect to login if not authenticated
-function requireAuth() {
-    if (!getAuthToken()) {
-        window.location.href = 'login.html';
-        return false;
-    }
-    return true;
+// ===== Simple route guard =====
+function isLoginPage() {
+  const path = window.location.pathname;
+  return path.endsWith('login.html') || path === '/login';
 }
 
-// Check authentication status on page load
-function checkAuth() {
-    if (!getAuthToken() && !window.location.pathname.includes('login.html')) {
-        window.location.href = 'login.html';
+function guardRoutes() {
+  if (isLoginPage()) {
+    // if already logged in, go straight to hosting
+    if (getAuthToken()) {
+      window.location.href = 'index.html';
     }
+    return;
+  }
+
+  // any other page requires auth
+  if (!getAuthToken()) {
+    window.location.href = 'login.html';
+  }
 }
+
+// Run route guard early
+document.addEventListener('DOMContentLoaded', guardRoutes);

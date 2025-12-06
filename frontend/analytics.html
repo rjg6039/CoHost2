@@ -1,77 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>CoHost • Analytics</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="css/style.css" />
-    <link rel="stylesheet" href="css/analytics.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - CoHost Restaurant</title>
+    <script src="js/config.js"></script>
+    <script src="js/darkmode.js"></script>
+    <script src="js/settings-manager.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/analytics.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="app-body">
-<header class="app-header">
-    <div class="app-title">CoHost</div>
-    <nav class="app-nav">
-        <a href="index.html" class="nav-link">Waitlist</a>
-        <a href="analytics.html" class="nav-link nav-link-active">Analytics</a>
-        <button id="logoutBtn" class="nav-link nav-button">Logout</button>
-    </nav>
-</header>
+<body>
+<!-- App Header -->
+<div class="app-header">
+    <h1 id="restaurantName">CoHost Restaurant</h1>
+</div>
 
-<main class="app-main analytics-page">
+<!-- Navigation with dark mode toggle -->
+<div class="tabs-container">
+    <div class="tabs">
+        <a href="index.html" class="tab">Hosting</a>
+        <a href="history.html" class="tab">History</a>
+        <a href="analytics.html" class="tab active">Analytics</a>
+        <a href="arrange.html" class="tab">Arrange</a>
+        <a href="settings.html" class="tab">Settings</a>
+    </div>
+    <div class="theme-toggle-container">
+        <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">🌙</button>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="analytics-container">
     <div class="analytics-header">
-        <div>
-            <h2>Service overview</h2>
-            <p id="analyticsSubtitle">Last 30 days • Live from CoHost</p>
-        </div>
-        <div class="segment-control">
-            <select id="timeRangeSelect">
-                <option value="7">7D</option>
-                <option value="30" selected>30D</option>
-                <option value="90">90D</option>
+        <h2>Restaurant Analytics Dashboard</h2>
+        <div class="date-range-selector">
+            <select id="timeRange">
+                <option value="7">Last 7 Days</option>
+                <option value="14">Last 14 Days</option>
+                <option value="30">Last 30 Days</option>
+                <option value="90">Last 90 Days</option>
+                <option value="365">Last Year</option>
             </select>
         </div>
     </div>
 
+    <!-- Enhanced Professional Metrics Cards -->
     <div class="metrics-grid">
         <div class="analytics-card">
+            <div class="metric-value" id="totalGuests">0</div>
             <div class="metric-label">Total Guests</div>
-            <div class="metric-value" id="metricTotalGuests">0</div>
+            <div class="metric-trend neutral">0%</div>
         </div>
         <div class="analytics-card">
-            <div class="metric-label">Avg Wait</div>
-            <div class="metric-value" id="metricAvgWait">0 min</div>
+            <div class="metric-value" id="totalParties">0</div>
+            <div class="metric-label">Total Parties</div>
+            <div class="metric-trend neutral">0%</div>
         </div>
         <div class="analytics-card">
+            <div class="metric-value" id="avgPartySize">0.0</div>
             <div class="metric-label">Avg Party Size</div>
-            <div class="metric-value" id="metricAvgPartySize">0.0</div>
+            <div class="metric-trend neutral">0%</div>
         </div>
         <div class="analytics-card">
-            <div class="metric-label">Cancellation Rate</div>
-            <div class="metric-value" id="metricCancelRate">0%</div>
+            <div class="metric-value" id="avgWaitTime">0min</div>
+            <div class="metric-label">Avg Wait Time</div>
+        </div>
+        <div class="analytics-card">
+            <div class="metric-value" id="occupancyRate">0%</div>
+            <div class="metric-label">Occupancy Rate</div>
+        </div>
+        <div class="analytics-card">
+            <div class="metric-value" id="avgTurnover">0.0</div>
+            <div class="metric-label">Avg Turnover</div>
+        </div>
+        <div class="analytics-card">
+            <div class="metric-value" id="totalRevenue">$0</div>
+            <div class="metric-label">Total Revenue</div>
+        </div>
+        <div class="analytics-card">
+            <div class="metric-value" id="peakHour">N/A</div>
+            <div class="metric-label">Peak Hour</div>
         </div>
     </div>
 
-    <div class="chart-card">
-        <div class="chart-header">
-            <span>Guests by hour</span>
+    <!-- Enhanced Charts Section -->
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>Hourly Traffic & Occupancy</h3>
+            <div class="chart-container">
+                <canvas id="hourlyChart"></canvas>
+            </div>
         </div>
-        <canvas id="hourlyGuestsChart"></canvas>
+        <div class="chart-card">
+            <h3>Daily Performance Trends</h3>
+            <div class="chart-container">
+                <canvas id="dailyChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <h3>Room Occupancy Distribution</h3>
+            <div class="chart-container">
+                <canvas id="occupancyChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <h3>Revenue Analytics</h3>
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
     </div>
 
-    <div class="insights-card">
+    <!-- Room Performance Dashboard -->
+    <div class="room-metrics-section">
+        <h3>Room Performance Dashboard</h3>
+        <div class="room-metrics-grid" id="roomMetrics">
+            <!-- Room metrics will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Enhanced AI Insights Panel -->
+    <div class="insights-panel">
         <div class="insights-header">
-            <span>AI service insights</span>
-            <span id="aiStatus" class="pill pill-muted">Demo</span>
+            <h3>AI-Powered Business Insights</h3>
+            <div class="insights-status" id="insightsStatus">
+                <span class="status-connected">Connected to Groq</span>
+            </div>
         </div>
-        <ul id="insightsList"></ul>
+        <div class="insights-content" id="insightsContent">
+            <div class="insight-item">
+                <div class="insight-icon">📈</div>
+                <div class="insight-text">
+                    <strong>Performance Analysis:</strong> System initializing analytics insights...
+                </div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-icon">🎯</div>
+                <div class="insight-text">
+                    <strong>Optimization Tips:</strong> Loading personalized recommendations...
+                </div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-icon">💡</div>
+                <div class="insight-text">
+                    <strong>Growth Opportunities:</strong> Preparing strategic insights...
+                </div>
+            </div>
+        </div>
+        <div class="insights-footer">
+            <button class="btn btn-primary" id="refreshInsights">🔄 Refresh Insights</button>
+            <div class="insights-timestamp">Last updated: <span id="lastUpdated">Loading...</span></div>
+        </div>
     </div>
-</main>
+</div>
 
-<!-- Chart.js CDN is fine here; you can vendor it later -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/analytics-data.js"></script>
 <script src="js/analytics.js"></script>
-<script src="js/auth-check.js"></script>
-
 </body>
 </html>

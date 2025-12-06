@@ -1,64 +1,86 @@
-// Authentication functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const loginBtn = document.getElementById('loginBtn');
-    const registerBtn = document.getElementById('registerBtn');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const errorBox = document.getElementById('error');
+// frontend/js/auth.js
 
-    // Check if user is already logged in
-    if (getAuthToken()) {
-        window.location.href = 'index.html';
-        return;
+document.addEventListener('DOMContentLoaded', () => {
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const restaurantInput = document.getElementById('restaurantName');
+  const restaurantRow = document.getElementById('restaurantRow');
+  const errorBox = document.getElementById('authError');
+  const tabs = document.querySelectorAll('.auth-tab');
+  const loginBtn = document.getElementById('loginBtn');
+  const registerBtn = document.getElementById('registerBtn');
+  const form = document.getElementById('authForm');
+
+  if (!form) return;
+
+  let mode = 'login';
+
+  function setMode(nextMode) {
+    mode = nextMode;
+    tabs.forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.mode === nextMode);
+    });
+
+    const isRegister = nextMode === 'register';
+    restaurantRow.classList.toggle('hidden', !isRegister);
+    loginBtn.classList.toggle('hidden', isRegister);
+    registerBtn.classList.toggle('hidden', !isRegister);
+    errorBox.textContent = '';
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => setMode(tab.dataset.mode));
+  });
+
+  async function handleLogin() {
+    errorBox.textContent = '';
+    try {
+      const res = await apiRequest('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: emailInput.value.trim(),
+          password: passwordInput.value
+        })
+      });
+
+      setAuthToken(res.token);
+      setCurrentUser(res.user);
+      window.location.href = 'index.html';
+    } catch (err) {
+      console.error('Login error:', err);
+      errorBox.textContent = err.message || 'Login failed';
     }
+  }
 
-    async function handleLogin() {
-        errorBox.textContent = '';
-        try {
-            const data = await apiRequest('/auth/login', {
-                method: 'POST',
-                body: JSON.stringify({
-                    email: emailInput.value,
-                    password: passwordInput.value
-                })
-            });
+  async function handleRegister() {
+    errorBox.textContent = '';
+    try {
+      const res = await apiRequest('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: emailInput.value.trim(),
+          password: passwordInput.value,
+          restaurantName: restaurantInput.value.trim() || undefined
+        })
+      });
 
-            setAuthToken(data.token);
-            setCurrentUser(data.user);
-            window.location.href = 'index.html';
-        } catch (err) {
-            errorBox.textContent = err.message || 'Login failed. Please try again.';
-            console.error('Login error:', err);
-        }
+      setAuthToken(res.token);
+      setCurrentUser(res.user);
+      window.location.href = 'index.html';
+    } catch (err) {
+      console.error('Register error:', err);
+      errorBox.textContent = err.message || 'Registration failed';
     }
+  }
 
-    async function handleRegister() {
-        errorBox.textContent = '';
-        try {
-            const data = await apiRequest('/auth/register', {
-                method: 'POST',
-                body: JSON.stringify({
-                    email: emailInput.value,
-                    password: passwordInput.value
-                })
-            });
-
-            setAuthToken(data.token);
-            setCurrentUser(data.user);
-            window.location.href = 'index.html';
-        } catch (err) {
-            errorBox.textContent = err.message || 'Registration failed. Please try again.';
-            console.error('Registration error:', err);
-        }
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (mode === 'login') {
+      handleLogin();
+    } else {
+      handleRegister();
     }
+  });
 
-    // Event listeners
-    if (loginBtn) loginBtn.addEventListener('click', handleLogin);
-    if (registerBtn) registerBtn.addEventListener('click', handleRegister);
-
-    if (passwordInput) {
-        passwordInput.addEventListener('keyup', e => {
-            if (e.key === 'Enter') handleLogin();
-        });
-    }
+  setMode('login');
 });

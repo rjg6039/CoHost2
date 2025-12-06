@@ -1,112 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>CoHost • Arrange</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="css/style.css" />
-    <style>
-        .arrange-layout {
-          display: grid;
-          grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
-          gap: 12px;
-        }
-        .arrange-column-title {
-          font-size: 14px;
-          font-weight: 600;
-          margin-bottom: 4px;
-        }
-        .arrange-column-subtitle {
-          font-size: 12px;
-          color: #8e8e93;
-          margin-bottom: 8px;
-        }
-        .arrange-list {
-          max-height: 420px;
-          overflow-y: auto;
-        }
-        .arrange-card {
-          border-radius: 12px;
-          padding: 8px 9px;
-          border: 0.5px solid rgba(0, 0, 0, 0.08);
-          background: rgba(255, 255, 255, 0.96);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-          margin-bottom: 8px;
-          font-size: 13px;
-        }
-        .arrange-card-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2px;
-        }
-        .arrange-name {
-          font-weight: 500;
-        }
-        .arrange-meta {
-          font-size: 12px;
-          color: #8e8e93;
-        }
-        .arrange-actions {
-          margin-top: 6px;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 4px;
-        }
-        .arrange-button {
-          border-radius: 999px;
-          border: none;
-          padding: 4px 8px;
-          font-size: 11px;
-          cursor: pointer;
-          background: #f2f2f7;
-        }
-        .arrange-button-primary {
-          background: var(--accent);
-          color: #fff;
-        }
-        .arrange-button-danger {
-          background: #ff3b30;
-          color: #fff;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoHost - Arrange Tables</title>
+    <script src="js/config.js"></script>
+    <script src="js/darkmode.js"></script>
+    <script src="js/settings-manager.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/arrange.css">
 </head>
-<body class="app-body">
-<header class="app-header">
-    <div class="app-title">CoHost</div>
-    <nav class="app-nav">
-        <a href="index.html" class="nav-link">Waitlist</a>
-        <a href="analytics.html" class="nav-link">Analytics</a>
-        <a href="history.html" class="nav-link">History</a>
-        <a href="arrange.html" class="nav-link nav-link-active">Arrange</a>
-        <a href="settings.html" class="nav-link">Settings</a>
-        <button id="logoutBtn" class="nav-link nav-button">Logout</button>
-    </nav>
-</header>
+<body>
+<!-- App Header -->
+<div class="app-header">
+    <h1 id="restaurantName">CoHost Restaurant</h1>
+</div>
 
-<main class="app-main">
-    <section class="panel">
-        <h2>Arrange & seating</h2>
+<!-- Navigation with dark mode toggle -->
+<div class="tabs-container">
+    <div class="tabs">
+        <a href="index.html" class="tab">Hosting</a>
+        <a href="history.html" class="tab">History</a>
+        <a href="analytics.html" class="tab">Analytics</a>
+        <a href="arrange.html" class="tab active">Arrange</a>
+        <a href="settings.html" class="tab">Settings</a>
+    </div>
+    <div class="theme-toggle-container">
+        <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">🌙</button>
+    </div>
+</div>
 
-        <div class="arrange-layout">
-            <div>
-                <div class="arrange-column-title">Waiting</div>
-                <div class="arrange-column-subtitle">Guests not yet seated.</div>
-                <div id="waitingList" class="arrange-list"></div>
+<!-- Main Content -->
+<div class="arrange-container">
+    <div class="arrange-header">
+        <h2>Table Arrangement</h2>
+        <div class="arrange-controls">
+            <div class="room-selector">
+                <label for="arrangeRoomSelect">Room:</label>
+                <select id="arrangeRoomSelect">
+                    <!-- Rooms will be populated by JavaScript -->
+                </select>
+                <button class="btn btn-success" id="addRoomBtn">+ Add Room</button>
+                <button class="btn btn-danger" id="deleteRoomBtn">Delete Room</button>
             </div>
-
             <div>
-                <div class="arrange-column-title">Seated</div>
-                <div class="arrange-column-subtitle">Guests currently at tables.</div>
-                <div id="seatedList" class="arrange-list"></div>
+                <button class="btn" id="toggleGridBtn">Toggle Grid</button>
             </div>
         </div>
-    </section>
-</main>
+    </div>
 
-<script src="js/config.js"></script>
+    <div class="arrange-canvas-container">
+        <div class="arrange-canvas" id="arrangeCanvas">
+            <!-- Grid and tables will be rendered here -->
+        </div>
+        <div class="canvas-overlay" id="canvasOverlay">
+            <div class="grid-coordinates" id="gridCoordinates">X: 0, Y: 0</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table Properties Modal -->
+<div id="tableModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="tableModalTitle">Add New Table</h2>
+            <span class="close" id="closeTableModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="tableForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tableSection">Section</label>
+                        <input type="number" id="tableSection" min="1" max="10" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tableNumber">Table Number</label>
+                        <input type="number" id="tableNumber" min="1" value="1" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tableCapacity">Capacity</label>
+                        <input type="number" id="tableCapacity" min="1" max="20" value="4" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Table Shape</label>
+                        <div class="icon-selection">
+                            <div class="icon-option active" data-icon="square">
+                                <div class="table-icon square"></div>
+                                <span>Square</span>
+                            </div>
+                            <div class="icon-option" data-icon="circle">
+                                <div class="table-icon circle"></div>
+                                <span>Circle</span>
+                            </div>
+                            <div class="icon-option" data-icon="vertical">
+                                <div class="table-icon vertical"></div>
+                                <span>Vertical</span>
+                            </div>
+                            <div class="icon-option" data-icon="horizontal">
+                                <div class="table-icon horizontal"></div>
+                                <span>Horizontal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Special Requirements</label>
+                        <div class="requirement-options">
+                            <label class="requirement-option">
+                                <input type="checkbox" id="tableHandicap">
+                                <span>♿ Handicap Access</span>
+                            </label>
+                            <label class="requirement-option">
+                                <input type="checkbox" id="tableHighchair">
+                                <span>👶 Highchair</span>
+                            </label>
+                            <label class="requirement-option">
+                                <input type="checkbox" id="tableWindow">
+                                <span>🪟 Window Seat</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="cancelTableModal">Cancel</button>
+            <button class="btn btn-success" id="saveTableBtn">Save Table</button>
+        </div>
+    </div>
+</div>
+
+<!-- Room Management Modal -->
+<div id="roomModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="roomModalTitle">Add New Room</h2>
+            <span class="close" id="closeRoomModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="roomForm">
+                <div class="form-group">
+                    <label for="roomName">Room Name</label>
+                    <input type="text" id="roomName" placeholder="Enter room name" required>
+                </div>
+                <div class="form-group">
+                    <label for="roomWidth">Grid Width (blocks)</label>
+                    <input type="number" id="roomWidth" min="10" max="100" value="40" required>
+                </div>
+                <div class="form-group">
+                    <label for="roomHeight">Grid Height (blocks)</label>
+                    <input type="number" id="roomHeight" min="10" max="100" value="30" required>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="cancelRoomModal">Cancel</button>
+            <button class="btn btn-success" id="saveRoomBtn">Save Room</button>
+        </div>
+    </div>
+</div>
+
+<!-- Context Menu -->
+<div class="context-menu" id="arrangeContextMenu" style="display: none;">
+    <!-- Context menu items will be populated by JavaScript -->
+</div>
+
+<script src="js/data.js"></script>
 <script src="js/arrange.js"></script>
-<script src="js/auth-check.js"></script>
-
 </body>
 </html>
