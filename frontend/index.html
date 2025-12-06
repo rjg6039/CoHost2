@@ -1,30 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>CoHost • Waitlist</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="css/style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoHost - Restaurant Waitlist Manager</title>
+    <script src="js/darkmode.js"></script>
+    <script src="js/settings-manager.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/hosting.css">
 </head>
-<body class="app-body">
-<header class="app-header">
-    <div class="app-title">CoHost</div>
-    <nav class="app-nav">
-        <a href="index.html" class="nav-link nav-link-active">Waitlist</a>
-        <a href="analytics.html" class="nav-link">Analytics</a>
-        <!-- later: arrange/history/settings -->
-        <button id="logoutBtn" class="nav-link nav-button">Logout</button>
-    </nav>
-</header>
+<body>
+<!-- App Header -->
+<div class="app-header">
+    <h1 id="restaurantName">CoHost Restaurant</h1>
+</div>
 
-<main class="app-main">
-    <section class="panel">
-        <h2>Active waitlist</h2>
-        <div id="waitlistContainer" class="list"></div>
-    </section>
-</main>
+<!-- Navigation with dark mode toggle -->
+<div class="tabs-container">
+    <div class="tabs">
+        <a href="index.html" class="tab active">Hosting</a>
+        <a href="history.html" class="tab">History</a>
+        <a href="analytics.html" class="tab">Analytics</a>
+        <a href="arrange.html" class="tab">Arrange</a>
+        <a href="settings.html" class="tab">Settings</a>
+    </div>
+    <div class="theme-toggle-container">
+        <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">🌙</button>
+    </div>
+</div>
 
-<script src="js/config.js"></script>
-<script src="js/waitlist.js"></script>
+
+<!-- Room Metrics -->
+<div class="room-metrics-container" id="roomMetricsContainer">
+    <!-- Metrics will be populated by JavaScript -->
+</div>
+
+<!-- Main Content -->
+<div class="main-container">
+    <div class="resizable-container" id="resizableContainer">
+        <!-- Left Side - Room View -->
+        <div class="room-view-section" id="roomViewSection">
+            <div class="header">
+                <h2>Room View</h2>
+            </div>
+
+            <div class="room-controls">
+                <div class="room-selector">
+                    <label for="roomSelect">Select Room</label>
+                    <select id="roomSelect">
+                        <option value="main">Main Dining</option>
+                        <option value="patio">Patio</option>
+                        <option value="bar">Bar Area</option>
+                        <option value="private">Private Room</option>
+                        <option value="lounge">Lounge</option>
+                    </select>
+                </div>
+
+                <div class="table-filters">
+                    <span class="filter-label">Show Only:</span>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="filterHandicap">
+                        <span class="checkbox-label">♿ Handicap</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="filterHighchair">
+                        <span class="checkbox-label">👶 Highchair</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="filterWindow">
+                        <span class="checkbox-label">🪟 Window</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="table-view" id="tableView">
+                <!-- Tables will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Resize Handle -->
+        <div class="resize-handle" id="resizeHandle"></div>
+
+        <!-- Right Side - Waitlist -->
+        <div class="waitlist-section" id="waitlistSection">
+            <div class="header">
+                <h2>Waitlist - <span id="waitlistCount">0</span> Parties</h2>
+                <button class="btn" id="addPartyBtn">+ Add Party</button>
+            </div>
+
+            <div class="search-container">
+                <input type="text" class="search-input" id="searchInput"
+                       placeholder="Search by name, phone, or notes...">
+            </div>
+
+            <div id="waitlistContainer">
+                <table class="waitlist-table">
+                    <thead>
+                    <tr>
+                        <th data-sort="name">Name</th>
+                        <th data-sort="size">Party Size</th>
+                        <th data-sort="time">Seating Time</th>
+                        <th data-sort="seatedTime">Status Time</th>
+                        <th>Phone</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="waitlistBody">
+                    <!-- Waitlist items will be populated here -->
+                    </tbody>
+                </table>
+
+                <div id="emptyState" class="empty-state">
+                    <h3>No parties on waitlist</h3>
+                    <p>Add parties using the "Add Party" button</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Updated Party Modal with new fields -->
+<div id="partyModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add New Party</h2>
+            <span class="close" id="closePartyModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="partyId">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="modalPartyName">Name *</label>
+                    <input type="text" id="modalPartyName" placeholder="Customer name" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalPartySize">Party Size *</label>
+                    <input type="number" id="modalPartySize" min="1" max="20" placeholder="Number of guests" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="modalSeatingTime">Seating Time *</label>
+                    <input type="time" id="modalSeatingTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalPhoneNumber">Phone Number</label>
+                    <input type="tel" id="modalPhoneNumber" placeholder="e.g., 555-123-4567">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="modalPartyNotes">Notes</label>
+                    <textarea id="modalPartyNotes" placeholder="Special requests, allergies, etc."></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Special Requirements</label>
+                    <div style="display: flex; gap: 15px; margin-top: 5px;">
+                        <label style="display: flex; align-items: center; gap: 5px;">
+                            <input type="checkbox" id="modalHandicap">
+                            ♿ Handicap Access
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px;">
+                            <input type="checkbox" id="modalHighchair">
+                            👶 Highchair
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px;">
+                            <input type="checkbox" id="modalWindow">
+                            🪟 Window Seat
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="cancelPartyModal">Cancel</button>
+            <button class="btn btn-success" id="savePartyBtn">Save Party</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/hosting.js"></script>
 </body>
 </html>
