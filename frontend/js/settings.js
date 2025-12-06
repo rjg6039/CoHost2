@@ -21,18 +21,15 @@ class SettingsPage {
             this.resetSettings();
         });
 
-        // Data management buttons
-        document.getElementById('exportDataBtn').addEventListener('click', () => {
-            this.exportData();
-        });
+        const resetRoomsBtn = document.getElementById('resetRoomsBtn');
+        if (resetRoomsBtn) {
+            resetRoomsBtn.addEventListener('click', () => this.resetRooms());
+        }
 
-        document.getElementById('importDataBtn').addEventListener('click', () => {
-            this.importData();
-        });
-
-        document.getElementById('clearDataBtn').addEventListener('click', () => {
-            this.clearData();
-        });
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        if (clearHistoryBtn) {
+            clearHistoryBtn.addEventListener('click', () => this.clearHistory());
+        }
 
         // Real-time updates for better UX
         const nameInput = document.getElementById('restaurantNameInput');
@@ -97,80 +94,57 @@ class SettingsPage {
         }
     }
 
-    exportData() {
-        const data = {
-            waitlist: this.loadData().waitlist || [],
-            history: this.loadData().history || [],
-            rooms: this.loadData().rooms || {},
-            settings: this.settings
-        };
+    async resetRooms() {
+        const password = document.getElementById('settingsPassword')?.value || '';
+        if (!password) {
+            this.showMessage('Password is required to reset table configurations.', 'error');
+            return;
+        }
+        if (!confirm('Reset all table configurations to default?')) return;
 
-        const dataStr = JSON.stringify(data, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        try {
+            const res = await fetch(`${API_BASE}/waitlist/reset-layout`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getAuthToken() || ''}`
+                },
+                body: JSON.stringify({ password })
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Unable to reset layouts');
 
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `cohost-backup-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        this.showMessage('Data exported successfully!', 'success');
-    }
-
-    importData() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-
-        input.onchange = e => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-
-            reader.onload = event => {
-                try {
-                    const importedData = JSON.parse(event.target.result);
-
-                    if (confirm('This will replace all existing data. Are you sure you want to continue?')) {
-                        // Save the imported data
-                        localStorage.setItem('cohost-data', JSON.stringify({
-                            waitlist: importedData.waitlist || [],
-                            history: importedData.history || [],
-                            rooms: importedData.rooms || {}
-                        }));
-
-                        // Update settings if they exist in imported data
-                        if (importedData.settings) {
-                            window.settingsManager.saveSettings(importedData.settings);
-                            this.settings = importedData.settings;
-                            this.populateForm();
-                        }
-
-                        this.showMessage('Data imported successfully!', 'success');
-                    }
-                } catch (error) {
-                    this.showMessage('Error importing data: Invalid file format', 'error');
-                }
-            };
-
-            reader.readAsText(file);
-        };
-
-        input.click();
-    }
-
-    clearData() {
-        if (confirm('Are you sure you want to clear ALL data? This will permanently delete your waitlist, history, and table arrangements. This action cannot be undone.')) {
-            localStorage.removeItem('cohost-data');
-            this.showMessage('All data cleared successfully!', 'success');
+            localStorage.removeItem('cohost-rooms');
+            this.showMessage('Table configurations reset to default.', 'success');
+            window.location.reload();
+        } catch (err) {
+            this.showMessage(err.message || 'Failed to reset layouts.', 'error');
         }
     }
 
-    loadData() {
-        const savedData = localStorage.getItem('cohost-data');
-        return savedData ? JSON.parse(savedData) : { waitlist: [], history: [], rooms: {} };
+    async clearHistory() {
+        const password = document.getElementById('settingsPassword')?.value || '';
+        if (!password) {
+            this.showMessage('Password is required to clear history.', 'error');
+            return;
+        }
+        if (!confirm('Delete all completed/cancelled parties from history?')) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/waitlist/history`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getAuthToken() || ''}`
+                },
+                body: JSON.stringify({ password })
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Unable to clear history');
+            this.showMessage('History cleared for this account.', 'success');
+        } catch (err) {
+            this.showMessage(err.message || 'Failed to clear history.', 'error');
+        }
     }
 
     showMessage(message, type = 'info') {

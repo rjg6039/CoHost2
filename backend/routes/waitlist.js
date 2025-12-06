@@ -1,5 +1,7 @@
 import express from "express";
 import Party from "../models/Party.js";
+import User from "../models/User.js";
+import bcrypt from "bcryptjs";
 import { authRequired } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -111,6 +113,59 @@ router.get("/history", async (req, res) => {
     res.json({ parties });
   } catch (err) {
     console.error("Get history error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// DELETE /api/waitlist/history  (requires password)
+router.delete("/history", async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    if (!password) {
+      return res.status(400).json({ error: "Password is required" });
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) return res.status(401).json({ error: "Invalid password" });
+
+    const result = await Party.deleteMany({
+      user: req.userId,
+      state: { $in: ["completed", "cancelled"] }
+    });
+
+    res.json({ cleared: result.deletedCount || 0 });
+  } catch (err) {
+    console.error("Clear history error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// POST /api/waitlist/reset-layout (no DB persistence yet, returns default layout)
+router.post("/reset-layout", async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    if (!password) {
+      return res.status(400).json({ error: "Password is required" });
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) return res.status(401).json({ error: "Invalid password" });
+
+    const defaultLayout = {
+      rooms: {
+        main: { name: "Main Dining Room", tables: [] }
+      }
+    };
+
+    res.json({ layout: defaultLayout });
+  } catch (err) {
+    console.error("Reset layout error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });

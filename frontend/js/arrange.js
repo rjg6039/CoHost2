@@ -34,7 +34,7 @@ class ArrangePage {
     }
 
     loadData() {
-        const savedData = localStorage.getItem('cohost-data');
+        const savedData = localStorage.getItem('cohost-rooms');
         if (savedData) {
             const data = JSON.parse(savedData);
             return this.normalizeMainLayout(data);
@@ -109,21 +109,8 @@ class ArrangePage {
     }
 
     saveData() {
-        // Merge with existing to avoid clobbering waitlist/history when only rooms change
-        let existing = {};
-        try {
-            existing = JSON.parse(localStorage.getItem('cohost-data')) || {};
-        } catch (err) {
-            existing = {};
-        }
-
-        const merged = {
-            waitlist: this.data.waitlist || existing.waitlist || [],
-            history: this.data.history || existing.history || [],
-            rooms: this.data.rooms || existing.rooms || {}
-        };
-
-        localStorage.setItem('cohost-data', JSON.stringify(merged));
+        const payload = { rooms: this.data.rooms || {} };
+        localStorage.setItem('cohost-rooms', JSON.stringify(payload));
     }
 
     setupEventListeners() {

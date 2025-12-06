@@ -83,8 +83,6 @@
                 <label for="defaultRoomSelect">Default room / floor</label>
                 <select id="defaultRoomSelect" class="form-control">
                     <option value="main">Main Dining Room</option>
-                    <option value="patio">Patio</option>
-                    <option value="bar">Bar Area</option>
                 </select>
                 <div class="form-help">
                     The room that loads first on Hosting and Arrange views.
@@ -117,7 +115,7 @@
                     <div class="form-group">
                         <label style="font-weight: normal;">
                             <input type="checkbox" id="showSeatedInWaitlist" />
-                            Show seated parties in the waitlist table
+                            Show seated parties in the waitlist
                         </label>
                     </div>
                 </div>
@@ -125,7 +123,7 @@
                     <div class="form-group">
                         <label style="font-weight: normal;">
                             <input type="checkbox" id="autoClearCompleted" />
-                            Auto-clear completed parties from History after 24 hours
+                            Auto-clear completed/cancelled parties from history after 24 hours
                         </label>
                     </div>
                 </div>
@@ -146,25 +144,23 @@
         </form>
     </div>
 
-    <!-- Data export / import section -->
     <div class="settings-section">
-        <h3>Data &amp; backups</h3>
-
+        <h3>Data maintenance</h3>
+        <div class="form-group">
+            <label for="settingsPassword">Confirm with password</label>
+            <input type="password" id="settingsPassword" class="form-control" placeholder="Enter account password" autocomplete="current-password" />
+            <div class="form-help">Required for destructive actions.</div>
+        </div>
         <div class="data-actions">
-            <button type="button" class="btn btn-info" id="exportDataBtn">
-                Export Data
+            <button type="button" class="btn btn-warning" id="resetRoomsBtn">
+                Reset table configurations
             </button>
-            <button type="button" class="btn btn-warning" id="importDataBtn">
-                Import Data
-            </button>
-            <button type="button" class="btn btn-danger" id="clearDataBtn">
-                Clear All Data
+            <button type="button" class="btn btn-danger" id="clearHistoryBtn">
+                Clear history (completed/cancelled)
             </button>
         </div>
-
         <div class="form-help">
-            Export your waitlist and history data for backup, or import previously
-            exported data. Clearing data removes local data from this browser only.
+            These actions reset layouts or erase party history for your account. They require your password to proceed.
         </div>
     </div>
 </div>
