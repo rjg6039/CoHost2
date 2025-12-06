@@ -88,6 +88,41 @@ class HostingPage {
         document.addEventListener('contextmenu', (e) => {
             e.preventDefault();
         });
+
+        this.setupResizeHandle();
+    }
+
+    setupResizeHandle() {
+        const handle = document.querySelector('.resize-handle');
+        const roomSection = document.querySelector('.room-view-section');
+        const waitlistSection = document.querySelector('.waitlist-section');
+        if (!handle || !roomSection || !waitlistSection) return;
+
+        let dragging = false;
+        let startX = 0;
+        let startRoomWidth = 0;
+
+        handle.addEventListener('mousedown', (e) => {
+            dragging = true;
+            startX = e.clientX;
+            startRoomWidth = roomSection.getBoundingClientRect().width;
+            document.body.classList.add('resizing');
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!dragging) return;
+            const dx = e.clientX - startX;
+            const newWidth = Math.max(280, startRoomWidth + dx);
+            roomSection.style.flex = '0 0 auto';
+            roomSection.style.width = `${newWidth}px`;
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (dragging) {
+                dragging = false;
+                document.body.classList.remove('resizing');
+            }
+        });
     }
 
     setupTableViewPan() {
@@ -165,10 +200,11 @@ class HostingPage {
                 this.renderRoomMetrics();
                 this.renderTables();
                 const select = document.getElementById('roomSelect');
-                if (select) {
-                    select.innerHTML = Object.keys(this.data.rooms).map(r => `<option value="${r}">${r}</option>`).join('');
-                    select.value = this.currentRoom;
-                }
+            if (select) {
+                const keys = Object.keys(this.data.rooms);
+                select.innerHTML = keys.map(r => `<option value="${r}">${this.data.rooms[r].name || r}</option>`).join('');
+                select.value = this.currentRoom;
+            }
             }
         } catch (err) {
             console.warn("Unable to refresh rooms", err);
