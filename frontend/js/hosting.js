@@ -193,21 +193,27 @@ class HostingPage {
                     this.currentRoom = this.data.rooms[this.currentRoom] ? this.currentRoom : roomPayload.rooms[0].key;
                 } else {
                     const nextRooms = {};
-                    data.rooms.forEach(r => nextRooms[r] = { name: r, tables: [] });
+                    const list = data.rooms.length ? data.rooms : ['main'];
+                    list.forEach(r => nextRooms[r] = { name: r, tables: [] });
                     this.data.rooms = nextRooms;
-                    this.currentRoom = data.rooms.includes(this.currentRoom) ? this.currentRoom : data.rooms[0];
+                    this.currentRoom = list.includes(this.currentRoom) ? this.currentRoom : list[0];
                 }
                 this.renderRoomMetrics();
                 this.renderTables();
                 const select = document.getElementById('roomSelect');
-            if (select) {
-                const keys = Object.keys(this.data.rooms);
-                select.innerHTML = keys.map(r => `<option value="${r}">${this.data.rooms[r].name || r}</option>`).join('');
-                select.value = this.currentRoom;
-            }
+                if (select) {
+                    const keys = Object.keys(this.data.rooms);
+                    select.innerHTML = keys.map(r => `<option value="${r}">${this.data.rooms[r].name || r}</option>`).join('');
+                    select.value = this.currentRoom;
+                }
             }
         } catch (err) {
             console.warn("Unable to refresh rooms", err);
+            const select = document.getElementById('roomSelect');
+            if (select && !select.innerHTML) {
+                select.innerHTML = `<option value="main">Main</option>`;
+                select.value = 'main';
+            }
         }
     }
 
