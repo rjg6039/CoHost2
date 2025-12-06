@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>CoHost • Analytics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/analytics.css" />
+</head>
+<body class="app-body">
+<header class="app-header">
+    <div class="app-title">CoHost</div>
+    <nav class="app-nav">
+        <a href="index.html" class="nav-link">Waitlist</a>
+        <a href="analytics.html" class="nav-link nav-link-active">Analytics</a>
+        <button id="logoutBtn" class="nav-link nav-button">Logout</button>
+    </nav>
+</header>
+
+<main class="app-main analytics-page">
+    <div class="analytics-header">
+        <div>
+            <h2>Service overview</h2>
+            <p id="analyticsSubtitle">Last 30 days • Live from CoHost</p>
+        </div>
+        <div class="segment-control">
+            <select id="timeRangeSelect">
+                <option value="7">7D</option>
+                <option value="30" selected>30D</option>
+                <option value="90">90D</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="metrics-grid">
+        <div class="analytics-card">
+            <div class="metric-label">Total Guests</div>
+            <div class="metric-value" id="metricTotalGuests">0</div>
+        </div>
+        <div class="analytics-card">
+            <div class="metric-label">Avg Wait</div>
+            <div class="metric-value" id="metricAvgWait">0 min</div>
+        </div>
+        <div class="analytics-card">
+            <div class="metric-label">Avg Party Size</div>
+            <div class="metric-value" id="metricAvgPartySize">0.0</div>
+        </div>
+        <div class="analytics-card">
+            <div class="metric-label">Cancellation Rate</div>
+            <div class="metric-value" id="metricCancelRate">0%</div>
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <div class="chart-header">
+            <span>Guests by hour</span>
+        </div>
+        <canvas id="hourlyGuestsChart"></canvas>
+    </div>
+
+    <div class="insights-card">
+        <div class="insights-header">
+            <span>AI service insights</span>
+            <span id="aiStatus" class="pill pill-muted">Demo</span>
+        </div>
+        <ul id="insightsList"></ul>
+    </div>
+</main>
+
+<!-- Chart.js CDN is fine here; you can vendor it later -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/config.js"></script>
+<script src="js/analytics.js"></script>
+</body>
+</html>

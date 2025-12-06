@@ -1,0 +1,121 @@
+:root {
+  --bg-primary: #f5f5f7;
+  --card-bg: rgba(255, 255, 255, 0.94);
+  --text-primary: #1d1d1f;
+  --text-secondary: #8e8e93;
+  --accent: #007aff;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.12);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  color: var(--text-primary);
+  background: radial-gradient(circle at top, #dde4ff 0, var(--bg-primary) 45%, #e5e5ea 100%);
+}
+
+.app-body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  backdrop-filter: blur(18px);
+  background: linear-gradient(to bottom, rgba(249, 249, 251, 0.98), rgba(249, 249, 251, 0.86));
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.09);
+}
+
+.app-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-link {
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.nav-link-active {
+  background: rgba(0, 122, 255, 0.12);
+  color: var(--accent);
+}
+
+.nav-button {
+  border: none;
+  background: #f2f2f7;
+  cursor: pointer;
+}
+
+.app-main {
+  flex: 1;
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.panel {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-soft);
+  border: 0.5px solid var(--border-subtle);
+}
+
+.panel h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.list {
+  margin-top: 10px;
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
+}
+
+.list-row:last-child {
+  border-bottom: none;
+}
+
+.list-row-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.list-row-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.empty-state,
+.error-state {
+  padding: 10px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}

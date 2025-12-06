@@ -1,0 +1,118 @@
+import express from "express";
+import Party from "../models/Party.js";
+import { authRequired } from "../middleware/auth.js";
+
+const router = express.Router();
+
+// All routes require authentication
+router.use(authRequired);
+
+// GET /api/waitlist  → current waiting / seated
+router.get("/", async (req, res) => {
+  try {
+    const parties = await Party.find({
+      user: req.userId,
+      state: { $in: ["waiting", "seated"] }
+    }).sort({ addedAt: 1 });
+
+    res.json({ parties });
+  } catch (err) {
+    console.error("Get waitlist error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// POST /api/waitlist → add party
+router.post("/", async (req, res) => {
+  try {
+    const {
+      name,
+      size,
+      phone,
+      notes,
+      room,
+      handicap,
+      highchair,
+      window,
+      quotedMinutes
+    } = req.body;
+
+    if (!name || !size) {
+      return res.status(400).json({ error: "Name and size are required" });
+    }
+
+    const party = await Party.create({
+      user: req.userId,
+      name,
+      size,
+      phone,
+      notes,
+      room: room || "main",
+      handicap: !!handicap,
+      highchair: !!highchair,
+      window: !!window,
+      quotedMinutes: quotedMinutes || null
+    });
+
+    res.status(201).json({ party });
+  } catch (err) {
+    console.error("Create party error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// PATCH /api/waitlist/:id/state → state transitions
+router.patch("/:id/state", async (req, res) => {
+  try {
+    const { state, tableId, cancelReason } = req.body;
+
+    const party = await Party.findOne({
+      _id: req.params.id,
+      user: req.userId
+    });
+
+    if (!party) return res.status(404).json({ error: "Party not found" });
+
+    if (state === "seated") {
+      party.state = "seated";
+      party.seatedAt = new Date();
+      if (tableId !== undefined) party.tableId = tableId;
+    } else if (state === "completed") {
+      party.state = "completed";
+      party.completedAt = new Date();
+    } else if (state === "cancelled") {
+      party.state = "cancelled";
+      party.cancelledAt = new Date();
+      party.cancelReason = cancelReason || party.cancelReason;
+    } else if (state === "waiting") {
+      party.state = "waiting";
+    }
+
+    await party.save();
+    res.json({ party });
+  } catch (err) {
+    console.error("Update state error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET /api/waitlist/history?days=30
+router.get("/history", async (req, res) => {
+  try {
+    const days = parseInt(req.query.days || "30", 10);
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const parties = await Party.find({
+      user: req.userId,
+      state: { $in: ["completed", "cancelled"] },
+      addedAt: { $gte: since }
+    }).sort({ addedAt: -1 });
+
+    res.json({ parties });
+  } catch (err) {
+    console.error("Get history error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+export default router;

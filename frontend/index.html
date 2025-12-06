@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>CoHost • Waitlist</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="app-body">
+<header class="app-header">
+    <div class="app-title">CoHost</div>
+    <nav class="app-nav">
+        <a href="index.html" class="nav-link nav-link-active">Waitlist</a>
+        <a href="analytics.html" class="nav-link">Analytics</a>
+        <!-- later: arrange/history/settings -->
+        <button id="logoutBtn" class="nav-link nav-button">Logout</button>
+    </nav>
+</header>
+
+<main class="app-main">
+    <section class="panel">
+        <h2>Active waitlist</h2>
+        <div id="waitlistContainer" class="list"></div>
+    </section>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/waitlist.js"></script>
+</body>
+</html>
