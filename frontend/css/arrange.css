@@ -1,0 +1,450 @@
+/* =========================
+Arrange Page Styles with Grid
+========================= */
+
+:root {
+    --grid-color: rgba(0, 0, 0, 0.2); /* Light mode default */
+}
+
+.dark-mode {
+    --grid-color: rgba(255, 255, 255, 0.2); /* Dark mode grid */
+}
+
+.arrange-container {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    width: calc(100% - 40px);
+    margin: 20px auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 180px);
+    border: 1px solid var(--border-color);
+}
+
+.arrange-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.arrange-header h2 {
+    color: var(--text-color);
+    margin: 0;
+    font-size: 24px;
+}
+
+.arrange-controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.room-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.room-selector label {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.room-selector select {
+    padding: 8px 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    min-width: 150px;
+}
+
+.view-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.arrange-canvas-container {
+    flex: 1;
+    position: relative;
+    background: var(--hover-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.arrange-canvas {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    position: relative;
+    cursor: default;
+}
+
+/* Grid Styles */
+.arrange-grid {
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Table Styles with precise 40px grid alignment */
+.table-item.arrange {
+    position: absolute;
+    border: 2px solid var(--table-border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+    color: white;
+    font-weight: bold;
+    z-index: 2; /* Above grid */
+}
+
+.table-item.arrange.moving {
+    opacity: 0.5;
+    z-index: 100;
+    cursor: grabbing;
+}
+
+.table-item.arrange.selected {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.3);
+}
+
+/* Table sizes based on 40px grid units */
+.table-item.arrange.square {
+    border-radius: 8px;
+    width: 80px !important;  /* 2 grid units */
+    height: 80px !important; /* 2 grid units */
+}
+
+.table-item.arrange.circle {
+    border-radius: 50%;
+    width: 80px !important;  /* 2 grid units */
+    height: 80px !important; /* 2 grid units */
+}
+
+.table-item.arrange.vertical {
+    border-radius: 8px;
+    width: 40px !important;   /* 1 grid unit */
+    height: 120px !important; /* 3 grid units */
+}
+
+.table-item.arrange.horizontal {
+    border-radius: 8px;
+    width: 120px !important; /* 3 grid units */
+    height: 40px !important;  /* 1 grid unit */
+}
+
+.table-item.arrange.ready { background: var(--table-ready); }
+.table-item.arrange.seated { background: var(--table-seated); }
+.table-item.arrange.not-ready { background: var(--table-not-ready); }
+
+.table-content {
+    text-align: center;
+    pointer-events: none;
+}
+
+.table-number {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.table-capacity {
+    font-size: 10px;
+    opacity: 0.9;
+}
+
+.table-tags {
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 2px;
+}
+
+.table-tag {
+    font-size: 8px;
+    padding: 1px 3px;
+    border-radius: 2px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+/* Icon Selection Styles */
+.icon-selection {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.icon-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.icon-option:hover {
+    border-color: var(--primary-color);
+}
+
+.icon-option.active {
+    border-color: var(--primary-color);
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+}
+
+.table-icon {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 5px;
+    border: 2px solid var(--text-color);
+}
+
+.table-icon.square {
+    border-radius: 5px;
+}
+
+.table-icon.circle {
+    border-radius: 50%;
+}
+
+.table-icon.vertical {
+    border-radius: 5px;
+    width: 20px;
+    height: 30px;
+}
+
+.table-icon.horizontal {
+    border-radius: 5px;
+    width: 30px;
+    height: 20px;
+}
+
+.icon-option span {
+    font-size: 12px;
+    color: var(--text-color);
+}
+
+/* Requirement Options */
+.requirement-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.requirement-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.requirement-option:hover {
+    background-color: var(--hover-bg);
+}
+
+.requirement-option input[type="checkbox"] {
+    margin: 0;
+}
+
+/* Context Menu for Arrange */
+.context-menu.arrange {
+    position: fixed;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 10000;
+    min-width: 180px;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.context-menu.arrange .context-menu-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.2s;
+    color: var(--text-color);
+}
+
+.context-menu.arrange .context-menu-item:first-child {
+    border-radius: 8px 8px 0 0;
+}
+
+.context-menu.arrange .context-menu-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 8px 8px;
+}
+
+.context-menu.arrange .context-menu-item:hover {
+    background-color: var(--hover-bg);
+}
+
+.context-menu.arrange .context-menu-item.danger:hover {
+    background-color: rgba(var(--danger-color-rgb), 0.1);
+    color: var(--danger-color);
+}
+
+.context-menu.arrange .context-menu-item.success:hover {
+    background-color: rgba(var(--success-color-rgb), 0.1);
+    color: var(--success-color);
+}
+
+/* Room center indicator (hidden by default) */
+.room-center {
+    display: none; /* Hide center indicator */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .arrange-container {
+        width: calc(100% - 20px);
+        margin: 10px auto;
+        padding: 15px;
+        height: calc(100vh - 140px);
+    }
+
+    .arrange-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .arrange-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .room-selector {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .icon-selection {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .arrange-header h2 {
+        font-size: 20px;
+    }
+
+    .room-selector {
+        flex-wrap: wrap;
+    }
+}
+
+/* Ensure tables align perfectly with grid */
+.table-item.arrange.square {
+    border-radius: 8px;
+    width: 80px !important;  /* Exactly 2 grid units (2 × 40px) */
+    height: 80px !important; /* Exactly 2 grid units */
+}
+
+.table-item.arrange.circle {
+    border-radius: 50%;
+    width: 80px !important;  /* Exactly 2 grid units */
+    height: 80px !important; /* Exactly 2 grid units */
+}
+
+.table-item.arrange.vertical {
+    border-radius: 8px;
+    width: 40px !important;   /* Exactly 1 grid unit */
+    height: 120px !important; /* Exactly 3 grid units */
+}
+
+.table-item.arrange.horizontal {
+    border-radius: 8px;
+    width: 120px !important; /* Exactly 3 grid units */
+    height: 40px !important;  /* Exactly 1 grid unit */
+}
+
+/* Add moving state with 50% opacity */
+.table-item.arrange.moving {
+    opacity: 0.5 !important;
+    z-index: 100;
+    cursor: grabbing;
+    transition: opacity 0.2s ease;
+}
+
+/* Ensure regular tables have full opacity */
+.table-item.arrange:not(.moving) {
+    opacity: 1;
+}
+
+
+/* Update grid to be more visible and ensure table alignment */
+.arrange-grid {
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Ensure tables align perfectly with grid lines */
+.table-item.arrange {
+    box-sizing: border-box; /* Include border in width/height calculations */
+}
+
+.table-item.arrange.square {
+    border-radius: 8px;
+    width: 80px !important;  /* Exactly 2 grid units */
+    height: 80px !important; /* Exactly 2 grid units */
+    margin: 0 !important;    /* Remove any margin that could affect alignment */
+}
+
+.table-item.arrange.circle {
+    border-radius: 50%;
+    width: 80px !important;  /* Exactly 2 grid units */
+    height: 80px !important; /* Exactly 2 grid units */
+    margin: 0 !important;
+}
+
+.table-item.arrange.vertical {
+    border-radius: 8px;
+    width: 40px !important;   /* Exactly 1 grid unit */
+    height: 120px !important; /* Exactly 3 grid units */
+    margin: 0 !important;
+}
+
+.table-item.arrange.horizontal {
+    border-radius: 8px;
+    width: 120px !important; /* Exactly 3 grid units */
+    height: 40px !important;  /* Exactly 1 grid unit */
+    margin: 0 !important;
+}
+
+/* Moving table opacity */
+.table-item.arrange.moving {
+    opacity: 0.5 !important;
+    z-index: 100;
+    cursor: grabbing;
+    transition: opacity 0.2s ease;
+}

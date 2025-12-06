@@ -1,42 +1,37 @@
-// Simple config so you can change later if frontend & backend split
-const API_BASE_URL = `${window.location.origin.replace(/\/$/, "")}/api`;
+// Configuration for API endpoints
+const API_BASE_URL = window.location.origin.includes('localhost')
+    ? 'http://localhost:3000/api'
+    : `${window.location.origin}/api`;
 
+// Authentication helpers
 function getAuthToken() {
-  return localStorage.getItem("cohost-token");
+    return localStorage.getItem('cohost-token');
 }
 
 function setAuthToken(token) {
-  localStorage.setItem("cohost-token", token);
-}
-
-function setCurrentUser(user) {
-  localStorage.setItem("cohost-user", JSON.stringify(user));
+    localStorage.setItem('cohost-token', token);
 }
 
 function getCurrentUser() {
-  try {
-    const raw = localStorage.getItem("cohost-user");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+    const user = localStorage.getItem('cohost-user');
+    return user ? JSON.parse(user) : null;
 }
 
-// generic helper
-async function apiRequest(path, options = {}) {
-  const token = getAuthToken();
-  const headers = {
-    "Content-Type": "application/json",
-    ...(options.headers || {})
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
+function setCurrentUser(user) {
+    localStorage.setItem('cohost-user', JSON.stringify(user));
+}
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers
-  });
+function logout() {
+    localStorage.removeItem('cohost-token');
+    localStorage.removeItem('cohost-user');
+    window.location.href = 'login.html';
+}
 
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "Request failed");
-  return data;
+// Redirect to login if not authenticated
+function requireAuth() {
+    if (!getAuthToken()) {
+        window.location.href = 'login.html';
+        return false;
+    }
+    return true;
 }

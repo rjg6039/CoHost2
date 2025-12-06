@@ -1,0 +1,189 @@
+/* =========================
+   Settings Page Styles
+   ========================= */
+
+.settings-container {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: var(--shadow);
+    width: calc(100% - 40px);
+    margin: 20px auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 180px);
+    border: 1px solid var(--border-color);
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.settings-header h2 {
+    color: var(--text-color);
+    margin: 0;
+    font-size: 28px;
+}
+
+.settings-form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.settings-form {
+    background: var(--card-bg);
+    padding: 0;
+}
+
+.settings-form .form-group {
+    margin-bottom: 25px;
+}
+
+.settings-form .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 16px;
+}
+
+.settings-form .form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+}
+
+.settings-form .form-control:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+}
+
+.settings-form .form-help {
+    font-size: 14px;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin-top: 8px;
+    line-height: 1.4;
+}
+
+.settings-form .form-help a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.settings-form .form-help a:hover {
+    text-decoration: underline;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.form-actions .btn {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 16px;
+}
+
+.settings-section {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 2px solid var(--border-color);
+}
+
+.settings-section h3 {
+    color: var(--text-color);
+    margin-bottom: 20px;
+    font-size: 22px;
+}
+
+.data-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.data-actions .btn {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 16px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .settings-container {
+        width: calc(100% - 20px);
+        margin: 10px auto;
+        padding: 20px;
+        height: calc(100vh - 140px);
+    }
+
+    .settings-form-container {
+        max-width: 100%;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .data-actions {
+        flex-direction: column;
+    }
+
+    .settings-form .form-control {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .settings-header h2 {
+        font-size: 24px;
+    }
+
+    .settings-section h3 {
+        font-size: 20px;
+    }
+
+    .form-actions .btn,
+    .data-actions .btn {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+}
+
+/* Additional color variables for accent colors */
+:root {
+    --accent-blue: #1e3a8a;
+    --accent-green: #059669;
+    --accent-purple: #7c3aed;
+    --accent-red: #dc2626;
+    --accent-orange: #ea580c;
+    --accent-teal: #0d9488;
+}
+
+.dark-mode {
+    --accent-blue: #3b82f6;
+    --accent-green: #10b981;
+    --accent-purple: #8b5cf6;
+    --accent-red: #ef4444;
+    --accent-orange: #f97316;
+    --accent-teal: #14b8a6;
+}
