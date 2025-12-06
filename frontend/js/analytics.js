@@ -45,6 +45,26 @@ function setRestaurantName() {
     document.title = `Analytics - ${name}`;
 }
 
+async function refreshUserName() {
+    try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
+        });
+        if (!res.ok) throw new Error();
+        const me = await res.json();
+        if (me?.restaurantName) {
+            const header = document.getElementById("restaurantName");
+            if (header) header.textContent = me.restaurantName;
+            document.title = `Analytics - ${me.restaurantName}`;
+            if (typeof setAuthUser === "function") {
+                setAuthUser({ ...(getAuthUser() || {}), restaurantName: me.restaurantName });
+            }
+        }
+    } catch (_) {
+        setRestaurantName();
+    }
+}
+
 function formatHour(hour) {
     const h = Number(hour);
     return `${h.toString().padStart(2, "0")}:00`;
@@ -375,7 +395,7 @@ function handleTimeRangeChange() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    setRestaurantName();
+    await refreshUserName();
     handleTimeRangeChange();
 
     const refreshBtn = document.getElementById("refreshInsights");
