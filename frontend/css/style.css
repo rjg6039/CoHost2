@@ -1,3 +1,4 @@
+
 :root {
     --primary-color: #1e3a8a;
     --primary-hover: #1e40af;
@@ -402,4 +403,80 @@ html:not(.dark-mode) {
 .form-group input, .form-group textarea, .form-group select,
 .table-item, .waitlist-table tr, .room-pin, .context-menu {
     transition: all 0.3s ease var(--transition-disable);
+}
+
+/* Auth / Login page */
+.auth-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 420px;
+    margin-top: 30px;
+}
+
+.auth-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 24px 24px 28px;
+    border: 1px solid var(--border-color);
+}
+
+.auth-title {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: var(--text-color);
+}
+
+.auth-subtitle {
+    font-size: 14px;
+    color: var(--text-color);
+    opacity: 0.8;
+    margin-bottom: 16px;
+}
+
+.auth-toggle {
+    display: flex;
+    background: var(--hover-bg);
+    border-radius: 999px;
+    padding: 4px;
+    margin-bottom: 16px;
+}
+
+.auth-mode-btn {
+    flex: 1;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 0;
+    font-size: 14px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-color);
+    transition: all 0.2s ease;
+}
+
+.auth-mode-btn.active {
+    background: var(--primary-color);
+    color: #ffffff;
+}
+
+.auth-error {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--danger-color);
+}
+
+.auth-footer {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--text-color);
+    opacity: 0.7;
+    text-align: center;
 }

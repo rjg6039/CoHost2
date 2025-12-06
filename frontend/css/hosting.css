@@ -1,3 +1,4 @@
+
 /* Hosting page specific styles */
 .main-container {
     display: flex;
@@ -8,7 +9,7 @@
     height: calc(100vh - 180px);
 }
 
-room-metrics-container {
+.room-metrics-container {
     display: flex;
     gap: 15px;
     margin-bottom: 20px;
@@ -42,7 +43,7 @@ room-metrics-container {
     border: 1px solid var(--border-color);
 }
 
-resize-handle {
+.resize-handle {
     width: 8px;
     background: var(--border-color);
     cursor: col-resize;
@@ -423,47 +424,6 @@ resize-handle {
 
 .context-menu-item:hover {
     background-color: var(--hover-bg);
-}
-
-.context-menu-item.danger {
-    color: var(--danger-color);
-}
-
-.context-menu-item.warning {
-    color: var(--warning-color);
-}
-
-.context-menu-item.success {
-    color: var(--success-color);
-}
-
-.context-menu-item.info {
-    color: var(--info-color);
-}
-
-/* Make sure tables are properly clickable */
-.table-item {
-    position: absolute;
-    width: 70px;
-    height: 70px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 2px solid var(--table-border-color);
-    box-shadow: var(--shadow);
-    color: white;
-    font-weight: bold;
-    padding-bottom: 8px; /* Add space at bottom for tags */
-}
-
-.table-item:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    z-index: 2; /* Bring hovered table to front */
 }
 
 .context-menu-item.danger {

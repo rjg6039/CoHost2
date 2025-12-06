@@ -1,94 +1,76 @@
-// frontend/js/config.js
 
-// UPDATE THIS to your actual backend Render URL
-// Example: const PRODUCTION_API_BASE = 'https://cohost2-backend.onrender.com/api';
-const PRODUCTION_API_BASE = 'https://cohost2-backend.onrender.com/api'; // <-- change this
+// Basic frontend configuration for CoHost2
 
-// Local dev vs production
-const API_BASE_URL = window.location.hostname === 'localhost'
-  ? 'http://localhost:3000/api'
-  : PRODUCTION_API_BASE;
+// Backend API base. You can override this with window.COHOST_API_BASE
+// before this script loads if you ever need to.
+const API_BASE = (typeof window !== "undefined" && window.COHOST_API_BASE)
+    ? window.COHOST_API_BASE
+    : "https://cohost2-backend.onrender.com/api";
 
-// ===== Auth token helpers =====
+// Storage keys
+const TOKEN_KEY = "cohost2_token";
+const USER_KEY = "cohost2_user";
+
 function getAuthToken() {
-  return localStorage.getItem('cohost-token');
+    try {
+        return localStorage.getItem(TOKEN_KEY);
+    } catch (e) {
+        return null;
+    }
 }
 
 function setAuthToken(token) {
-  localStorage.setItem('cohost-token', token);
-}
-
-function clearAuthToken() {
-  localStorage.removeItem('cohost-token');
-}
-
-function getCurrentUser() {
-  const raw = localStorage.getItem('cohost-user');
-  return raw ? JSON.parse(raw) : null;
-}
-
-function setCurrentUser(user) {
-  localStorage.setItem('cohost-user', JSON.stringify(user));
-}
-
-function logout() {
-  clearAuthToken();
-  localStorage.removeItem('cohost-user');
-  window.location.href = 'login.html';
-}
-
-// ===== Core API helper =====
-async function apiRequest(path, options = {}) {
-  const token = getAuthToken();
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {})
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers
-  });
-
-  let data = null;
-  try {
-    data = await res.json();
-  } catch (_) {
-    // ignore
-  }
-
-  if (!res.ok) {
-    const msg = (data && data.error) || `HTTP ${res.status}: ${res.statusText}`;
-    throw new Error(msg);
-  }
-
-  return data;
-}
-
-// ===== Simple route guard =====
-function isLoginPage() {
-  const path = window.location.pathname;
-  return path.endsWith('login.html') || path === '/login';
-}
-
-function guardRoutes() {
-  if (isLoginPage()) {
-    // if already logged in, go straight to hosting
-    if (getAuthToken()) {
-      window.location.href = 'index.html';
+    try {
+        if (token) {
+            localStorage.setItem(TOKEN_KEY, token);
+        } else {
+            localStorage.removeItem(TOKEN_KEY);
+        }
+    } catch (e) {
+        console.error("Unable to access localStorage for auth token", e);
     }
-    return;
-  }
-
-  // any other page requires auth
-  if (!getAuthToken()) {
-    window.location.href = 'login.html';
-  }
 }
 
-// Run route guard early
-document.addEventListener('DOMContentLoaded', guardRoutes);
+function setAuthUser(user) {
+    try {
+        if (user) {
+            localStorage.setItem(USER_KEY, JSON.stringify(user));
+        } else {
+            localStorage.removeItem(USER_KEY);
+        }
+    } catch (e) {
+        console.error("Unable to access localStorage for user", e);
+    }
+}
+
+function getAuthUser() {
+    try {
+        const raw = localStorage.getItem(USER_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function clearAuth() {
+    setAuthToken(null);
+    setAuthUser(null);
+}
+
+// Redirect to login if no token and not already on login page
+(function enforceAuthOnProtectedPages() {
+    if (typeof window === "undefined") return;
+
+    const path = window.location.pathname || "";
+    const isLoginPage =
+        path.endsWith("/login.html") ||
+        path.endsWith("/login") ||
+        /login\.html$/.test(path);
+
+    if (!isLoginPage && !getAuthToken()) {
+        // Let the page finish minimal render, then redirect
+        window.addEventListener("DOMContentLoaded", () => {
+            window.location.href = "login.html";
+        });
+    }
+})();

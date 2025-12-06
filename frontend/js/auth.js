@@ -1,86 +1,102 @@
-// frontend/js/auth.js
 
-document.addEventListener('DOMContentLoaded', () => {
-  const emailInput = document.getElementById('email');
-  const passwordInput = document.getElementById('password');
-  const restaurantInput = document.getElementById('restaurantName');
-  const restaurantRow = document.getElementById('restaurantRow');
-  const errorBox = document.getElementById('authError');
-  const tabs = document.querySelectorAll('.auth-tab');
-  const loginBtn = document.getElementById('loginBtn');
-  const registerBtn = document.getElementById('registerBtn');
-  const form = document.getElementById('authForm');
+// Handles login / register for CoHost2 using username + password only
 
-  if (!form) return;
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("authForm");
+    const loginBtn = document.getElementById("loginModeBtn");
+    const registerBtn = document.getElementById("registerModeBtn");
+    const authTitle = document.getElementById("authTitle");
+    const authSubtitle = document.getElementById("authSubtitle");
+    const submitBtn = document.getElementById("authSubmitBtn");
+    const errorEl = document.getElementById("authError");
 
-  let mode = 'login';
+    let mode = "login"; // "login" or "register"
 
-  function setMode(nextMode) {
-    mode = nextMode;
-    tabs.forEach(tab => {
-      tab.classList.toggle('active', tab.dataset.mode === nextMode);
+    function setMode(newMode) {
+        mode = newMode;
+
+        if (mode === "login") {
+            loginBtn.classList.add("active");
+            registerBtn.classList.remove("active");
+            authTitle.textContent = "Sign in";
+            authSubtitle.textContent = "Use your CoHost username and password.";
+            submitBtn.textContent = "Login";
+        } else {
+            registerBtn.classList.add("active");
+            loginBtn.classList.remove("active");
+            authTitle.textContent = "Create an account";
+            authSubtitle.textContent = "Choose a username and password to get started.";
+            submitBtn.textContent = "Register";
+        }
+
+        if (errorEl) {
+            errorEl.style.display = "none";
+            errorEl.textContent = "";
+        }
+    }
+
+    if (loginBtn) {
+        loginBtn.addEventListener("click", () => setMode("login"));
+    }
+    if (registerBtn) {
+        registerBtn.addEventListener("click", () => setMode("register"));
+    }
+
+    if (!form) return;
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (errorEl) {
+            errorEl.style.display = "none";
+            errorEl.textContent = "";
+        }
+
+        const username = (form.username?.value || "").trim();
+        const password = (form.password?.value || "").trim();
+
+        if (!username || !password) {
+            if (errorEl) {
+                errorEl.textContent = "Username and password are required.";
+                errorEl.style.display = "block";
+            }
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = mode === "login" ? "Logging in..." : "Registering...";
+
+        try {
+            const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
+            const res = await fetch(`${API_BASE}${endpoint}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                const msg = data && (data.error || data.message) || "Unable to " + (mode === "login" ? "log in." : "register.");
+                throw new Error(msg);
+            }
+
+            if (data.token) {
+                setAuthToken(data.token);
+            }
+            if (data.user) {
+                setAuthUser(data.user);
+            }
+
+            window.location.href = "index.html";
+        } catch (err) {
+            console.error(err);
+            if (errorEl) {
+                errorEl.textContent = err.message || "Something went wrong.";
+                errorEl.style.display = "block";
+            }
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = mode === "login" ? "Login" : "Register";
+        }
     });
-
-    const isRegister = nextMode === 'register';
-    restaurantRow.classList.toggle('hidden', !isRegister);
-    loginBtn.classList.toggle('hidden', isRegister);
-    registerBtn.classList.toggle('hidden', !isRegister);
-    errorBox.textContent = '';
-  }
-
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => setMode(tab.dataset.mode));
-  });
-
-  async function handleLogin() {
-    errorBox.textContent = '';
-    try {
-      const res = await apiRequest('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: emailInput.value.trim(),
-          password: passwordInput.value
-        })
-      });
-
-      setAuthToken(res.token);
-      setCurrentUser(res.user);
-      window.location.href = 'index.html';
-    } catch (err) {
-      console.error('Login error:', err);
-      errorBox.textContent = err.message || 'Login failed';
-    }
-  }
-
-  async function handleRegister() {
-    errorBox.textContent = '';
-    try {
-      const res = await apiRequest('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: emailInput.value.trim(),
-          password: passwordInput.value,
-          restaurantName: restaurantInput.value.trim() || undefined
-        })
-      });
-
-      setAuthToken(res.token);
-      setCurrentUser(res.user);
-      window.location.href = 'index.html';
-    } catch (err) {
-      console.error('Register error:', err);
-      errorBox.textContent = err.message || 'Registration failed';
-    }
-  }
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (mode === 'login') {
-      handleLogin();
-    } else {
-      handleRegister();
-    }
-  });
-
-  setMode('login');
 });

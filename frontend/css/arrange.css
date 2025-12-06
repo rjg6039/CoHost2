@@ -1,3 +1,4 @@
+
 /* =========================
 Arrange Page Styles with Grid
 ========================= */
@@ -456,4 +457,16 @@ Arrange Page Styles with Grid
 /* Ensure regular tables have full opacity */
 .table-item.arrange:not(.moving) {
     opacity: 1;
+}
+
+
+/* Update grid to be more visible and ensure table alignment */
+.arrange-grid {
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Ensure tables align perfectly with grid lines */
+.table-item.arrange {
+    box-sizing: border-box; /* Include border in width/height calculations */
 }
