@@ -768,7 +768,7 @@ class HostingPage {
 
         const room = this.data.rooms[this.currentRoom];
         const baseTable = room?.tables.find(t => t.id === tableId);
-        if (baseTable) baseTable.state = 'ready';
+        if (baseTable) baseTable.state = 'not-ready';
         this.persistRoomTables();
         this.renderTables();
         this.renderRoomMetrics();
@@ -829,6 +829,20 @@ class HostingPage {
             },
             body: JSON.stringify({ tables: room.tables, name: room.name })
         }).catch(err => console.error('Save room error', err));
+    }
+
+    setTableStateForParty(partyId, newState = 'not-ready') {
+        const pidStr = partyId?.toString();
+        const party = (this.waitlist || []).find(p => (p._id || p.id)?.toString() === pidStr);
+        const tableId = party?.tableId;
+        if (tableId === undefined || tableId === null) return;
+        const roomKey = party.room || this.currentRoom;
+        const room = this.data.rooms[roomKey];
+        if (!room) return;
+        const table = room.tables.find(t => t.id === tableId);
+        if (!table) return;
+        table.state = newState;
+        this.persistRoomTables(roomKey);
     }
 
     // Waitlist Sorting
@@ -1079,6 +1093,7 @@ class HostingPage {
     }
 
     completeParty(partyId) {
+        this.setTableStateForParty(partyId, 'not-ready');
         this.updatePartyState(partyId, 'completed').then(() => this.refreshWaitlist());
     }
 

@@ -1,42 +1,33 @@
 // Standalone History Page functionality
 class HistoryPage {
     constructor() {
-        this.data = this.loadHistoryData();
+        this.data = { history: [] };
         this.currentFilter = 'week'; // Default to last week
         this.sortState = { field: 'seatedTime', direction: 'desc' };
         this.init();
     }
 
-    init() {
+    async init() {
         this.setupEventListeners();
+        await this.refreshHistory();
         this.renderHistory();
         applyRestaurantNameFromServer();
     }
 
-    // Load data without affecting hosting page
-    loadHistoryData() {
-        const savedData = localStorage.getItem('cohost-data');
-        if (savedData) {
-            const data = JSON.parse(savedData);
-            // Ensure history array exists
-            if (!data.history) data.history = [];
-            return data;
+    async refreshHistory() {
+        const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+        try {
+            const res = await fetch(`${API_BASE}/waitlist/history`, {
+                headers: {
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
+            });
+            const data = await res.json();
+            this.data.history = (res.ok && Array.isArray(data.parties)) ? data.parties : [];
+        } catch (err) {
+            console.warn('Unable to load history', err);
+            this.data.history = [];
         }
-
-        // Return empty data structure if no saved data
-        return {
-            history: [],
-            waitlist: [],
-            rooms: {},
-            settings: { restaurantName: 'CoHost Restaurant' }
-        };
-    }
-
-    // Save data without affecting hosting page
-    saveHistoryData() {
-        const currentData = this.loadHistoryData();
-        currentData.history = this.data.history;
-        localStorage.setItem('cohost-data', JSON.stringify(currentData));
     }
 
     setupEventListeners() {
@@ -106,7 +97,7 @@ class HistoryPage {
         }
 
         let filtered = this.data.history.filter(party => {
-            const partyDate = new Date(party.completedTime || party.cancelledTime || party.added);
+            const partyDate = this.getEventDate(party);
             return partyDate >= cutoffDate;
         });
 
@@ -115,14 +106,15 @@ class HistoryPage {
     }
 
     createHistoryRow(party) {
-        const seatedTime = party.seatedTime ? this.formatTime(new Date(party.seatedTime)) : 'N/A';
+        const seatedTime = party.seatedAt ? this.formatTime(new Date(party.seatedAt)) : 'N/A';
         const duration = this.calculateDuration(party);
-        const status = party.status || (party.cancelledTime ? 'Cancelled' : 'Completed');
+        const status = (party.state || '').toLowerCase() === 'cancelled' ? 'Cancelled' : 'Completed';
 
         let requirements = '';
-        if (party.handicap) requirements += '<span class="requirement-indicator">♿</span>';
-        if (party.highchair) requirements += '<span class="requirement-indicator">👶</span>';
-        if (party.window) requirements += '<span class="requirement-indicator">🪟</span>';
+        if (party.handicap) requirements += '<span class="requirement-indicator">?T?</span>';
+        if (party.highchair) requirements += '<span class="requirement-indicator">dY`</span>';
+        if (party.window) requirements += '<span class="requirement-indicator">dY?Y</span>';
+        const pid = party._id || party.id;
 
         return `
             <tr>
@@ -140,11 +132,8 @@ class HistoryPage {
                 </td>
                 <td>
                     <div class="history-actions-grid">
-                        <button class="history-action-btn btn-return" onclick="window.historyPage.returnToWaitlist(${party.id})" title="Return to Waitlist">
+                        <button class="history-action-btn btn-return" onclick="window.historyPage.returnToWaitlist('${pid}')" title="Return to Waitlist">
                             Return
-                        </button>
-                        <button class="history-action-btn btn-delete" onclick="window.historyPage.deleteFromHistory(${party.id})" title="Delete Permanently">
-                            Delete
                         </button>
                     </div>
                 </td>
@@ -157,10 +146,10 @@ class HistoryPage {
     }
 
     calculateDuration(party) {
-        if (!party.seatedTime) return 'N/A';
+        if (!party.seatedAt) return 'N/A';
 
-        const seated = new Date(party.seatedTime);
-        const completed = new Date(party.completedTime || party.cancelledTime || new Date());
+        const seated = new Date(party.seatedAt);
+        const completed = new Date(party.completedAt || party.cancelledAt || new Date());
         const diffMs = completed - seated;
         const diffMins = Math.floor(diffMs / 60000);
         const diffHours = Math.floor(diffMins / 60);
@@ -220,16 +209,16 @@ class HistoryPage {
                     bVal = b.size;
                     break;
                 case 'seatedTime':
-                    aVal = new Date(a.seatedTime || 0);
-                    bVal = new Date(b.seatedTime || 0);
+                    aVal = new Date(a.seatedAt || 0);
+                    bVal = new Date(b.seatedAt || 0);
                     break;
                 case 'duration':
                     aVal = this.getDurationInMinutes(a);
                     bVal = this.getDurationInMinutes(b);
                     break;
                 case 'status':
-                    aVal = a.status || (a.cancelledTime ? 'Cancelled' : 'Completed');
-                    bVal = b.status || (b.cancelledTime ? 'Cancelled' : 'Completed');
+                    aVal = a.state || (a.cancelledAt ? 'cancelled' : 'completed');
+                    bVal = b.state || (b.cancelledAt ? 'cancelled' : 'completed');
                     break;
                 default:
                     aVal = a[field];
@@ -243,10 +232,10 @@ class HistoryPage {
     }
 
     getDurationInMinutes(party) {
-        if (!party.seatedTime) return 0;
+        if (!party.seatedAt) return 0;
 
-        const seated = new Date(party.seatedTime);
-        const completed = new Date(party.completedTime || party.cancelledTime || new Date());
+        const seated = new Date(party.seatedAt);
+        const completed = new Date(party.completedAt || party.cancelledAt || new Date());
         return Math.floor((completed - seated) / 60000);
     }
 
@@ -260,61 +249,21 @@ class HistoryPage {
     }
 
     returnToWaitlist(partyId) {
-        const partyIndex = this.data.history.findIndex(p => p.id === partyId);
-        if (partyIndex === -1) return;
-
-        const party = this.data.history[partyIndex];
-
-        // Create a new waiting party from the history
-        const newParty = {
-            id: this.generateNewId(),
-            name: party.name,
-            size: party.size,
-            time: new Date().toTimeString().slice(0, 5), // Current time
-            phone: party.phone,
-            notes: party.notes,
-            handicap: party.handicap || false,
-            highchair: party.highchair || false,
-            window: party.window || false,
-            state: 'waiting',
-            seatedTime: null,
-            completedTime: null,
-            tableId: null,
-            added: new Date()
-        };
-
-        // Add to waitlist in data and remove from history
-        this.data.history.splice(partyIndex, 1);
-
-        // Update the main data storage
-        const mainData = this.loadHistoryData();
-        mainData.waitlist.push(newParty);
-        mainData.history = this.data.history;
-        localStorage.setItem('cohost-data', JSON.stringify(mainData));
-
-        this.renderHistory();
-
-        alert(`Party "${party.name}" has been returned to the waitlist`);
+        const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+        if (!token) return;
+        fetch(`${API_BASE}/waitlist/${partyId}/state`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ state: 'waiting', tableId: null })
+        }).then(() => this.refreshHistory().then(() => this.renderHistory()))
+          .catch(err => console.error('Return to waitlist failed', err));
     }
 
-    deleteFromHistory(partyId) {
-        if (confirm('Are you sure you want to permanently delete this party from history? This action cannot be undone.')) {
-            this.data.history = this.data.history.filter(p => p.id !== partyId);
-
-            // Update the main data storage
-            const mainData = this.loadHistoryData();
-            mainData.history = this.data.history;
-            localStorage.setItem('cohost-data', JSON.stringify(mainData));
-
-            this.renderHistory();
-        }
-    }
-
-    generateNewId() {
-        const mainData = this.loadHistoryData();
-        const maxWaitlistId = Math.max(0, ...mainData.waitlist.map(p => p.id));
-        const maxHistoryId = Math.max(0, ...mainData.history.map(p => p.id));
-        return Math.max(maxWaitlistId, maxHistoryId) + 1;
+    getEventDate(party) {
+        return new Date(party.completedAt || party.cancelledAt || party.addedAt || party.added || 0);
     }
 }
 
